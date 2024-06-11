@@ -1,0 +1,44 @@
+project-root/
+├── backend/
+│   ├── app/
+│   │   ├── models/ all models with their docker files are here  
+│   │   │   ├── model1/
+│   │   │   │   ├── Dockerfile
+│   │   │   │   ├── requirements.txt
+│   │   │   │   └── model_script.py
+│   │   │   ├── model2/
+│   │   │   └── model3/
+│   │   ├── routes/ all backend functionalities desined with their route so the server can call the function that can handle the request 
+│   │   │   ├── __init__.py
+│   │   │   ├── upload.py
+│   │   │   └── run_model.py
+│   │   ├── services/ services that the backend uses to run the model and init the docker container 
+│   │   │   ├── __init__.py
+│   │   │   ├── docker_service.py
+│   │   │   └── model_service.py
+│   │   ├── utils/ helpers functions 
+│   │   │   ├── __init__.py
+│   │   │   └── helpers.py
+│   │   ├── static/
+│   │   ├── templates/
+│   │   ├── __init__.py
+│   │   ├── main.py --> entry point 
+│   │   └── config.py --> config file that is used to configure the flask application 
+├── frontend/
+│   ├── main.py  # This is where the Tkinter GUI code will go
+│   ├── components/
+│   │   ├── upload_frame.py
+│   │   └── result_frame.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   └── api.py  # Utility to interact with the backend
+├── data/
+│   ├── uploads/
+│   └── outputs/
+├── scripts/ 
+│   ├── build_docker_images.sh
+│   ├── run_docker_containers.sh
+│   └── deploy.sh
+├── docker-compose.yml
+├── README.md
+└── .gitignore
