@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, OptionMenu
+from tkinter import filedialog, messagebox
 import requests
 
 class UploadFrame(tk.Frame):
@@ -13,42 +13,17 @@ class UploadFrame(tk.Frame):
         self.upload_button = tk.Button(self, text="Browse", command=self.browse_file)
         self.upload_button.pack(pady=10)
         
-        self.container_label = tk.Label(self, text="Select Container:")
-        self.container_label.pack(pady=10)
+        self.model_label = tk.Label(self, text="Select model")
+        self.model_label.pack(pady=10)
         
-        self.container_var = tk.StringVar()
-        self.container_dropdown = OptionMenu(self, self.container_var, "Loading containers...")
-        self.container_dropdown.pack(pady=10)
-
-        self.start_button = tk.Button(self, text="Start Container", command=self.start_container)
-        self.start_button.pack(pady=10)
+        self.model_var = tk.StringVar(value="model1")
+        self.model_dropdown = tk.OptionMenu(self, self.model_var, "model1", "model2", "model3")
+        self.model_dropdown.pack(pady=10)
         
         self.submit_button = tk.Button(self, text="Upload", command=self.upload_image)
         self.submit_button.pack(pady=20)
         
         self.file_path = None
-
-        # Fetch and populate containers on initialization
-        self.fetch_containers()
-
-    def fetch_containers(self):
-        try:
-            response = requests.get("http://localhost:5000/containers")
-            response.raise_for_status()  # Raise an error for bad status codes
-            container_names = response.json()
-            self.update_container_dropdown(container_names)
-        except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to fetch containers: {e}")
-
-    def update_container_dropdown(self, container_names):
-        self.container_dropdown['menu'].delete(0, 'end')
-        for name in container_names:
-            self.container_dropdown['menu'].add_command(label=name, command=tk._setit(self.container_var, name))
-        
-        if container_names:
-            self.container_var.set(container_names[0])
-        else:
-            self.container_var.set("No containers found")
 
     def browse_file(self):
         self.file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.png;*.jpeg")])
@@ -60,34 +35,17 @@ class UploadFrame(tk.Frame):
             messagebox.showerror("Error", "No file selected")
             return
         
-        container_name = self.container_var.get()
+        model = self.model_var.get()
         try:
             with open(self.file_path, 'rb') as image_file:
                 files = {'image': image_file}
-                data = {'container': container_name}
+                data = {'model': model}
                 response = requests.post("http://localhost:5000/api/upload", files=files, data=data)
                 
                 if response.status_code == 200:
                     self.show_result_callback(response.json())
                 else:
                     messagebox.showerror("Error", f"Failed to upload image: {response.json()}")
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
-
-    def start_container(self, container_name=None):
-        if container_name is None:
-            container_name = self.container_var.get()
-            print (container_name)
-        try:
-            data = {'container_name': container_name}
-            response = requests.post("http://localhost:5000/start", json=data)
-           
-            if response.status_code == 200:
-                print (container_name)
-                messagebox.showinfo("Success", f"Started container: {container_name}")
-            else:
-                print ("inside error")
-                messagebox.showerror("Error", f"Failed to start container: {response.json()}")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
