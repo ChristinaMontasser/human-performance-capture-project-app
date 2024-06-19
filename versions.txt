@@ -1,0 +1,9 @@
+v1 --> frontend and backend 
+	v1.1 --> Backend is workingon the localhost, initial frontend.
+	v1.2 --> Frontend is updated and connected with the backend server through api to send requests.
+	v1.3 --> some edits
+v2 --> container functionalities 
+	v2.1 --> listing and starting existing containers 
+
+
+

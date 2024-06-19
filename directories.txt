@@ -1,4 +1,4 @@
-project-root/
+human-performance-capture-project-app/
 ├── backend/
 │   ├── app/
 │   │   ├── models/ all models with their docker files are here  
@@ -8,19 +8,17 @@ project-root/
 │   │   │   │   └── model_script.py
 │   │   │   ├── model2/
 │   │   │   └── model3/
-│   │   ├── routes/ all backend functionalities desined with their route so the server can call the function that can handle the request 
+│   │   ├── routes/ #all backend functionalities desined with their route so the server can call the function that can handle the request 
 │   │   │   ├── __init__.py
 │   │   │   ├── upload.py
 │   │   │   └── run_model.py
-│   │   ├── services/ services that the backend uses to run the model and init the docker container 
+│   │   ├── services/ #services that the backend uses to run the model and init the docker container 
 │   │   │   ├── __init__.py
 │   │   │   ├── docker_service.py
 │   │   │   └── model_service.py
 │   │   ├── utils/ helpers functions 
 │   │   │   ├── __init__.py
 │   │   │   └── helpers.py
-│   │   ├── static/
-│   │   ├── templates/
 │   │   ├── __init__.py
 │   │   ├── main.py --> entry point 
 │   │   └── config.py --> config file that is used to configure the flask application 
@@ -31,7 +29,7 @@ project-root/
 │   │   └── result_frame.py
 │   ├── utils/
 │   │   ├── __init__.py
-│   │   └── api.py  # Utility to interact with the backend
+│   │   └── api.py  # to interact with the backend
 ├── data/
 │   ├── uploads/
 │   └── outputs/
@@ -40,5 +38,3 @@ project-root/
 │   ├── run_docker_containers.sh
 │   └── deploy.sh
 ├── docker-compose.yml
-├── README.md
-└── .gitignore

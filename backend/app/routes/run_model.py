@@ -29,4 +29,6 @@ def upload_image():
     return jsonify(result)
 
 
+
+
 #jsonify converts a Python dictionary into a json response
