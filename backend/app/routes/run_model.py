@@ -1,10 +1,11 @@
 from flask import Blueprint, request, jsonify, current_app
-from services.model_service import run_model
+from services.model_service import run_model, list_containers
 from werkzeug.utils import secure_filename
 import os 
 
 #Define functionalities as blueprints using the Blueprint function
 run_model_blueprint = Blueprint('run_model', __name__)
+list_containers_blueprint = Blueprint('list_containers', __name__)
 
 #curl -X POST http://127.0.0.1:5000/upload \
 #     -F "image=@ path/image.jpg" \
@@ -29,6 +30,9 @@ def upload_image():
     return jsonify(result)
 
 
-
-
 #jsonify converts a Python dictionary into a json response
+
+@run_model_blueprint.route('/containers', methods=['GET'])
+def list_docker_containers():
+    result = list_containers()
+    return jsonify(result)

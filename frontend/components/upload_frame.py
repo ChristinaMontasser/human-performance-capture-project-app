@@ -13,14 +13,14 @@ class UploadFrame(tk.Frame):
         self.upload_button = tk.Button(self, text="Browse", command=self.browse_file)
         self.upload_button.pack(pady=10)
         
-        self.container_label = tk.Label(self, text="Select Container:")
+        self.container_label = tk.Label(self, text="Select Model:")
         self.container_label.pack(pady=10)
         
         self.container_var = tk.StringVar()
         self.container_dropdown = OptionMenu(self, self.container_var, "Loading containers...")
         self.container_dropdown.pack(pady=10)
 
-        self.start_button = tk.Button(self, text="Start Container", command=self.start_container)
+        self.start_button = tk.Button(self, text="Start Model", command=self.start_container)
         self.start_button.pack(pady=10)
         
         self.submit_button = tk.Button(self, text="Upload", command=self.upload_image)
