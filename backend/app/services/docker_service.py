@@ -23,3 +23,14 @@ def list_docker_containers():
         return container_names
     except docker.errors.DockerException as e:
         return {"error": str(e)}, 500
+    
+def start_docker_container(container_name):
+    try:
+        print("")
+        container = client.containers.get(container_name)
+        container.start()
+        return {"message": f"Started container: {container_name}"}
+    except docker.errors.NotFound:
+        return {"error": f"Container '{container_name}' not found"}, 404
+    except docker.errors.APIError as e:
+        return {"error": f"Failed to start container '{container_name}': {str(e)}"}, 500
