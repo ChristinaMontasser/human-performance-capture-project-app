@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from services.model_service import run_model, list_containers, start_container
+from services.model_service import run_model, start_container
 from werkzeug.utils import secure_filename
 import os 
 
