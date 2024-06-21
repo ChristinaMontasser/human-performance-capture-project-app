@@ -31,10 +31,10 @@ def upload_image():
 
 #jsonify converts a Python dictionary into a json response
 
-@run_model_blueprint.route('/containers', methods=['GET'])
+'''@run_model_blueprint.route('/containers', methods=['GET'])
 def list_docker_containers():
     result = list_containers()
-    return jsonify(result)
+    return jsonify(result)'''
 
 @run_model_blueprint.route('/start', methods=['POST'])
 def start_docker_container():

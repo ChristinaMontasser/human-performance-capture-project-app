@@ -28,17 +28,12 @@ class UploadFrame(tk.Frame):
         
         self.file_path = None
 
-        # Fetch and populate containers on initialization
-        self.fetch_containers()
+        # Populate models on initialization
+        self.populate_models()
 
-    def fetch_containers(self):
-        try:
-            response = requests.get("http://localhost:5000/containers")
-            response.raise_for_status()  # Raise an error for bad status codes
-            container_names = response.json()
-            self.update_container_dropdown(container_names)
-        except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to fetch containers: {e}")
+    def populate_models(self):
+        model_names = ["Pare", "ExPose", "4DHumans"]
+        self.update_container_dropdown(model_names)
 
     def update_container_dropdown(self, container_names):
         self.container_dropdown['menu'].delete(0, 'end')
@@ -77,16 +72,13 @@ class UploadFrame(tk.Frame):
     def start_container(self, container_name=None):
         if container_name is None:
             container_name = self.container_var.get()
-            print (container_name)
         try:
             data = {'container_name': container_name}
             response = requests.post("http://localhost:5000/start", json=data)
            
             if response.status_code == 200:
-                print (container_name)
                 messagebox.showinfo("Success", f"Started container: {container_name}")
             else:
-                print ("inside error")
                 messagebox.showerror("Error", f"Failed to start container: {response.json()}")
         except Exception as e:
             messagebox.showerror("Error", str(e))

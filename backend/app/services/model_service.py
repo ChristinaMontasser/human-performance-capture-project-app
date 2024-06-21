@@ -8,9 +8,9 @@ def run_model(model, image_path):
     result = run_docker_container(model, image_path, output_folder)
     return result
 
-def list_containers():
+'''def list_containers():
     result = list_docker_containers()
-    return result
+    return result'''
 
 def start_container(container_name):
     result = start_docker_container(container_name)
