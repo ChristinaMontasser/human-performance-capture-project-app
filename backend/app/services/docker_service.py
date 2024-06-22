@@ -2,13 +2,27 @@
 
 import docker
 import os 
+from flask import  current_app
 
 client = docker.from_env()
 
-def run_docker_container(model, image_path, output_folder):
+#def  docker():
+    #!! Check if the model container exist or not 
+
+
+
+def run_model_container(model):
+    #Logic to check whether this model container exist or not and accordingly chooses one of the below functionalities 
+    #  run_docker_container
+    # start_docker_container
+
+    #Result the image folder and send it back to front.
+    pass 
+
+def run_docker_container(model):
     volumes = {
-        os.path.abspath(image_path): {'bind': '/app/input_image', 'mode': 'ro'},
-        os.path.abspath(output_folder): {'bind': '/app/output', 'mode': 'rw'}
+        os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/app/input_image', 'mode': 'ro'},
+        os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/app/output', 'mode': 'rw'}
     }
     container = client.containers.run(model, volumes=volumes, detach=True)
     container.wait()
@@ -23,7 +37,8 @@ def run_docker_container(model, image_path, output_folder):
         return container_names
     except docker.errors.DockerException as e:
         return {"error": str(e)}, 500'''
-    
+
+
 def start_docker_container(container_name):
     try:
         container = client.containers.get(container_name)

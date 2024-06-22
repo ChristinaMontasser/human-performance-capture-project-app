@@ -16,12 +16,13 @@ class App(tk.Tk):
         
         self.result_frame = ResultFrame(self.container)
         self.result_frame.grid(row=0, column=0, sticky="nsew")
-        
+
+        ##!! Model Description 
         self.show_frame(self.upload_frame)
     
     def show_frame(self, frame):
         frame.tkraise()
-
+    #!! Will be changed to show images or video 
     def show_result(self, result):
         self.result_frame.display_results(result)
         self.show_frame(self.result_frame)
