@@ -16,7 +16,7 @@ class App(tk.Tk):
         
         self.result_frame = ResultFrame(self.container)
         self.result_frame.grid(row=0, column=0, sticky="nsew")
-
+        
         ##!! Model Description 
         self.show_frame(self.upload_frame)
     
