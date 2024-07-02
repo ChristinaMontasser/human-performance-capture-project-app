@@ -18,7 +18,7 @@ class UploadFrame(tk.Frame):
         self.container_label.pack(pady=10)
         
         self.container_var = tk.StringVar()
-        self.container_var.set("Loading containers...") 
+        self.container_var.set("Loading containers...")
         self.container_dropdown = OptionMenu(self, self.container_var, "Loading containers...", command=self.update_model_info)
         self.container_dropdown.pack(pady=10)
 
@@ -30,9 +30,6 @@ class UploadFrame(tk.Frame):
         
         self.submit_button = tk.Button(self, text="Upload", command=self.upload_input)
         self.submit_button.pack(pady=20)
-        
-        # self.process_button = tk.Button(self, text="Upload and Start Model", command=self.upload_and_start_model)
-        # self.process_button.pack(pady=20)
         
         self.file_path = None
         self.folder_path = None
@@ -73,7 +70,6 @@ class UploadFrame(tk.Frame):
         self.file_path = filedialog.askopenfilename(filetypes=[("JPG", "*.jpg"), ("PNG", "*.png"), ("JPEG", "*.jpeg"), ("MP4", "*.mp4"), ("AVI", "*.avi")])
         if self.file_path:
             self.label.config(text=f"Selected file: {self.file_path}")
-        if self.file_path:
             self.folder_path = None  # Reset folder path if a file is selected
             self.label.config(text=f"Selected file: {self.file_path}")
             file_extension = os.path.splitext(self.file_path)[1].lower()
@@ -121,44 +117,6 @@ class UploadFrame(tk.Frame):
                 messagebox.showerror("Error", f"Failed to upload item: {response.json()}")
         except Exception as e:
             messagebox.showerror("Error", str(e))
-
-    # def upload_image(self): 
-    #     if not self.file_path:
-    #         messagebox.showerror("Error", "No file selected")
-    #         return
-        
-    #     container_name = self.container_var.get()
-    #     try:
-    #         with open(self.file_path, 'rb') as image_file:
-    #             files = {'input': image_file}
-    #             data = {'container': container_name}
-    #             response = requests.post("http://localhost:5000/api/upload", files=files, data=data)
-    #             if response.status_code == 200:
-    #                 self.show_result_callback(response.json())
-    #             else:
-    #                 messagebox.showerror("Error", f"Failed to upload image: {response.json()}")
-    #     except Exception as e:
-    #         messagebox.showerror("Error", str(e))
-
-    
-    # def upload_and_start_model(self):
-    #     if not self.file_path:
-    #         messagebox.showerror("Error", "No file selected")
-    #         return
-        
-    #     container_name = self.container_var.get()
-    #     try:
-    #         with open(self.file_path, 'rb') as image_file:
-    #             files = {'image': image_file}
-    #             data = {'container': container_name}
-    #             response = requests.post("http://localhost:5000/api/upload", files=files, data=data)
-    #             if response.status_code == 200:
-    #                 self.show_result_callback(response.json())
-    #                 self.start_container(container_name)
-    #             else:
-    #                 messagebox.showerror("Error", f"Failed to upload image: {response.json()}")
-    #     except Exception as e:
-    #         messagebox.showerror("Error", str(e))
 
     def start_container(self, container_name=None):
         if container_name is None:
