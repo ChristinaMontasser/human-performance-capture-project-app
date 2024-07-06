@@ -20,15 +20,37 @@ def run_model_container(model):
     pass 
 
 def run_docker_container(model):
+    image = client.images.get('4d-humans-video:latest')
+    # List all containers (both running and stopped)
+    all_containers = client.containers.list(all=True)
+    
+    # Filter containers based on the image
+    containers_using_image = [container for container in all_containers if image.id in container.image.id]
+    
     volumes = {
         os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/app/input_image', 'mode': 'ro'},
         os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/app/output', 'mode': 'rw'}
     }
-    container = client.containers.run(model, volumes=volumes, detach=True)
-    container.wait()
-    output = container.logs()
-    container.remove()
-    return output.decode('utf-8')
+    print('im here again')
+    model=str('4d-video-v9')
+    print(type(model))
+    container = client.containers.get(model)
+    print('afterit')
+        #if docker.errors.NotFound :
+            #call run_docker_container()
+
+    if container.status != 'running':
+        container.start()
+
+    #container = client.containers.run('4d-video-v9', volumes=volumes, detach=True)
+        #if docker.errors.NotFound :
+            #call run_docker_container()
+    #container.wait()
+    #output = container.logs()
+    #container.remove()
+    
+    #return output.decode('utf-8')
+
 
 '''def list_docker_containers():
     try:

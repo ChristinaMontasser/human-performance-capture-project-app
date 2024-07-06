@@ -95,35 +95,32 @@ class UploadFrame(tk.Frame):
         return file_paths
     
     def upload_input(self):
+        print('uploadinput')
         if not self.file_path and not self.folder_path:
             messagebox.showerror("Error", "No file or folder selected")
             return
-        
         container_name = self.container_var.get()
         try:
-            if self.file_path:
-                with open(self.file_path, 'rb') as file:
-                    files = {'file': file}
-                    data = {'container': container_name}
-                    response = requests.post("http://localhost:5000/api/upload", files=files, data=data)
-            elif self.folder_path:
-                files = [('file', (os.path.basename(f), open(f, 'rb'))) for f in self.get_files_from_folder(self.folder_path)]
-                data = {'container': container_name}
-                response = requests.post("http://localhost:5000/api/upload_folder", files=files, data=data)
-            
-            if response.status_code == 200:
-                self.show_result_callback(response.json())
-            else:
-                messagebox.showerror("Error", f"Failed to upload item: {response.json()}")
+            with open(self.file_path, 'rb') as image_file:
+                files = {'image': image_file}
+                data = {'model': container_name}  # Use 'model' to match the backend expectation
+                response = requests.post("http://127.0.0.1:5000/upload", files=files, data=data)
+                print(data['model'])
+                if response.status_code == 200:
+                    self.show_result_callback(response.json())
+                else:
+                    messagebox.showerror("Error", f"Failed to upload image: {response.json()}")
         except Exception as e:
             messagebox.showerror("Error", str(e))
-
+    #!!Just upload the data and then the backend will start the container based on the container name 
     def start_container(self, container_name=None):
         if container_name is None:
             container_name = self.container_var.get()
+
         try:
             data = {'container_name': container_name}
             response = requests.post("http://localhost:5000/start", json=data)
+           
             if response.status_code == 200:
                 messagebox.showinfo("Success", f"Started container: {container_name}")
             else:
