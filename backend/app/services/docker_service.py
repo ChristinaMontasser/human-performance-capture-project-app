@@ -3,7 +3,7 @@
 import docker
 import os 
 from flask import  current_app
-
+from utils.helpers import check_image_container, set_up_docker_json_file
 client = docker.from_env()
 
 #def  docker():
@@ -20,22 +20,13 @@ def run_model_container(model):
     pass 
 
 def run_docker_container(model):
-    image = client.images.get('4d-humans-video:latest')
-    # List all containers (both running and stopped)
-    all_containers = client.containers.list(all=True)
-    
-    # Filter containers based on the image
-    containers_using_image = [container for container in all_containers if image.id in container.image.id]
-    
+    container_name= check_image_container(model)
+    #set_up_docker_json_file()
     volumes = {
-        os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/app/input_image', 'mode': 'ro'},
-        os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/app/output', 'mode': 'rw'}
+        os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/app/data/input_image', 'mode': 'ro'},
+        os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/app/data/output', 'mode': 'rw'}
     }
-    print('im here again')
-    model=str('4d-video-v9')
-    print(type(model))
-    container = client.containers.get(model)
-    print('afterit')
+    #print(container_names)
         #if docker.errors.NotFound :
             #call run_docker_container()
 

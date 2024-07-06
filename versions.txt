@@ -11,3 +11,4 @@ v3 --> finalize
 	v3.1 --> architecture updates 
 	v3.2 --> frontend UI updates: Add function of showing details when choosing models; regularizing the input types
 	v3.3 --> data can be sent to the backend and saved in the server storage properly  
+	v3.4 --> image exist, container does, if not run the docker file. Build up a database of the current images and and assign to it some containers 
