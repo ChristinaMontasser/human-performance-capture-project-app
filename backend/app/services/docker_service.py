@@ -104,21 +104,20 @@ def delete_existing_container(container_name):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def run_command_in_container(container_name, command):    
+def run_command_in_container(container, command):    
     try:
-        container = client.containers.get(container_name)
-        container.exec_run("apt-get install libgl1-mesa-dev")
+        container = client.containers.get(container)
         exec_log = container.exec_run(command)
         print(exec_log.output.decode())
     except docker.errors.NotFound:
-        print(f"Container {container_name} not found.")
+        print(f"Container {container} not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
 def check_image_container(image_name):
     volumes = {
-        os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/app/data/input_image', 'mode': 'ro'},
-        os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/app/data/output', 'mode': 'rw'}
+        os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/workspace/data/input', 'mode': 'ro'},
+        os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/workspace/data/output', 'mode': 'rw'}
     }
     #Get model_container names from json file
     image_container_mapping = load_model_container_mapping()
@@ -156,16 +155,19 @@ def check_image_container(image_name):
 
 
 def run_docker_container(model, save_to_folder, extensions=['.npz', '.png']):
-   
-    #!! match  both the model name sent by frontend and the one that's in json file 
+    #print(docker.__version__)
+    #print('Hi')
+    # #!! match  both the model name sent by frontend and the one that's in json file 
     container = check_image_container(model)
 
     if container.status != 'running':
         container.start()
     command = get_command(model)
-    run_command_in_container('4d-video-v9', command)
+    run_command_in_container(container, command)
+    #run_command_in_container('4d-video-v9', "python track.py video.source='example_data/videos/gymnasts.mp4'")
+    
     #Now we have to send the output that's in output folder to the 'Save To' folder
     #copy from one data/outputs to the save_to_folder
     #copy based on preference result, npz. overlayed image or both, create filter function that filters the copied files based on its extention 
-    copy_files(current_app.config['OUTPUT_FOLDER'], save_to_folder, extensions)
+    #copy_files(current_app.config['OUTPUT_FOLDER'], save_to_folder, extensions)
     return True
