@@ -108,6 +108,8 @@ class UploadFrame(tk.Frame):
             self.file_path = None  # Reset file path if a folder is selected
             self.label.config(text=f"Selected folder: {self.folder_path}")
             self.update_container_dropdown(self.models["folder"])
+            #print(self.models["folder"])
+            #return self.folder_path
 
     def get_files_from_folder(self, folder_path):
         file_paths = []
@@ -129,8 +131,9 @@ class UploadFrame(tk.Frame):
         container_name = self.container_var.get()
         try:
             with open(self.file_path, 'rb') as image_file:
+                print(self.output_path)
                 files = {'image': image_file}
-                data = {'model': container_name}  # Use 'model' to match the backend expectation
+                data = {'model': container_name, 'save_to_folder': self.output_path}  # Use 'model' to match the backend expectation
                 response = requests.post("http://127.0.0.1:5000/upload", files=files, data=data)
                 print(data['model'])
                 if response.status_code == 200:

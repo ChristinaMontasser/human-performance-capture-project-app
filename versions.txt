@@ -12,3 +12,6 @@ v3 --> finalize
 	v3.2 --> frontend UI updates: Add function of showing details when choosing models; regularizing the input types
 	v3.3 --> data can be sent to the backend and saved in the server storage properly  
 	v3.4 --> image exist, container does, if not run the docker file. Build up a database of the current images and and assign to it some containers 
+
+v4 --> backend 
+	v4.1 --> run commands in container, save to chosen file, choose result type, updates and splitting all scenerios for containers and images 

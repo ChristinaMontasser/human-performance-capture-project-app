@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from services.model_service import run_model, start_container
+from services.model_service import run_model
 from werkzeug.utils import secure_filename
 import os 
 import logging
@@ -14,7 +14,6 @@ logging.basicConfig(level=logging.DEBUG)
 #!! the only function that should be called by the frontend 
 @run_model_blueprint.route('/upload', methods=['POST'])
 def upload_image():
-    print('im inside upload')
     if 'image' not in request.files and 'model' not in request.form:
         logging.error("No image or model specified")
         return jsonify({"error": "No image or model specified"}), 400
@@ -22,10 +21,11 @@ def upload_image():
     #Recieve the data from the user request
     image = request.files['image']
     model = request.form['model']
+    save_to_folder = request.form['save_to_folder']
+   # print(save_to_folder)
     if image.filename == '':
         logging.error("No image filename")
         return jsonify({"error": "No selected file"}), 400
-    print(image.filename)
     #Save the imgae 
     filename = secure_filename(image.filename)
     image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
@@ -40,7 +40,8 @@ def upload_image():
 
     try:
         print(f'imm {model}')
-        result = run_model(model)
+        print(save_to_folder)
+        result = run_model(model, save_to_folder)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -55,10 +56,10 @@ def list_docker_containers():
     result = list_containers()
     return jsonify(result)'''
 
-##!! Only upload route is called by the frontend and the backend is responsible of all logics from whether a container exist or not
-#!! Also the front end start, upload functionalities will be merged to one function. 
-@run_model_blueprint.route('/start', methods=['POST'])
-def start_docker_container():
-    container_name = request.json.get('container_name')
-    result = start_container(container_name)
-    return jsonify(result)
+# ##!! Only upload route is called by the frontend and the backend is responsible of all logics from whether a container exist or not
+# #!! Also the front end start, upload functionalities will be merged to one function. 
+# @run_model_blueprint.route('/start', methods=['POST'])
+# def start_docker_container():
+#     container_name = request.json.get('container_name')
+#     result = start_container(container_name)
+#     return jsonify(result)

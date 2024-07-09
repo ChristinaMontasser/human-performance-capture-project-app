@@ -1,5 +1,9 @@
 {
+    "pare_video:latest": [
+        "pare_video"
+    ],
     "expose:latest": [
+        "test",
         "expose"
     ],
     "pare:latest": [
