@@ -3,6 +3,7 @@ from services.model_service import run_model
 from werkzeug.utils import secure_filename
 import os 
 import logging
+#from ..utils.helpers import map_model_name
 #Define functionalities as blueprints using the Blueprint function
 run_model_blueprint = Blueprint('run_model', __name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -20,7 +21,18 @@ def upload_image():
 
     #Recieve the data from the user request
     image = request.files['image']
+    #model = map_model_name(request.form['model'])
+    # model = 'expose1:latest'
+    filename = secure_filename(image.filename)
+    file_extension = os.path.splitext(filename)[1] 
+
+
+
     model = request.form['model']
+    print("the model name is ")
+    model = model.lower()
+    model = f'{model}:latest'
+    print(model)
     save_to_folder = request.form['save_to_folder']
    # print(save_to_folder)
     if image.filename == '':
@@ -39,8 +51,13 @@ def upload_image():
         return jsonify({"error": "Image not saved"}), 500
 
     try:
-        print(f'imm {model}')
-        print(save_to_folder)
+        # print(save_to_folder)
+
+        # if file_extension.lower() == '.jpg' or file_extension.lower() == '.jpeg' or file_extension.lower() == '.png':
+        #     result = run_model(model, save_to_folder)
+        # if file_extension.lower() == '.mp4' or file_extension.lower() == '.avi':
+        #     result = run_model(model, save_to_folder)
+
         result = run_model(model, save_to_folder)
         return jsonify(result)
     except Exception as e:

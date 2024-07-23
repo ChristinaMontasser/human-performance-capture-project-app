@@ -51,3 +51,16 @@ def copy_files(src_folder, dst_folder, extensions):
         logging.info(f"Files copied from {src_folder} to {dst_folder} successfully.")
     except Exception as e:
         logging.error(f"An error occurred while copying files: {e}")
+
+def decide_model_given_data_type(data_type):
+    pass
+def map_model_name(model_name, data_type): 
+    #lowercase
+    #read image_container_mapping json file 
+    #get keys as a list 
+    #sting.contains() --> list
+    #if this list length > 2:
+        #we have to filter based on the given data type 
+        #decide_model_given_data_type()
+    pass
+    #return new_model_name_from_json_file
