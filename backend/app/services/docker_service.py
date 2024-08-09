@@ -2,18 +2,143 @@
 
 import docker, json
 import os 
+import subprocess
 from flask import  current_app
 from utils.helpers import copy_files
 client = docker.from_env()
 from docker.errors import ContainerError, ImageNotFound, APIError
+import cv2
+import shutil
+import shlex
 
-def get_command(model):
+def get_command(model, file_extension):
     #!! Write a logic that returns the expected command from the model name and type of the uploaded data we will select the command 
     #We have common format:
     # model-name_datatype_command e.g. "4d-human_video_command", "4d-human_image_command"
     # So, split model name, + check sent data that's now save in the file video or image, + command word  
-    return 'python demo.py --image-folder /workspace/data/input --exp-cfg data/conf.yaml --show=False --output-folder /workspace/data/output --save-params True --save-vis True --save-mesh True'
-     
+
+    json_file = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'models', 'command.json'))
+
+    # Path to the uploads folder
+    if file_extension in [".jpg", ".jpeg", ".png"]:
+        data_type =  "image"
+    elif file_extension in [".mp4", ".avi"]:
+        data_type =  "video"
+    else:
+        raise ValueError(f"Unsupported file extension: {file_extension}")
+
+    # Load the JSON commands
+    if os.path.exists(json_file):
+        with open(json_file, 'r') as f:
+            commands = json.load(f)
+            print(commands)
+    else:
+        raise FileNotFoundError(f"JSON file '{json_file}' does not exist.")
+
+    # Generate key based on model and data_type
+    model = model.split(':')[0]
+    key = f'{model}_{data_type}'
+    
+    # Check if the key exists in the JSON data
+    if key in commands:
+        value = commands.get(key)
+        return value
+    else:
+        raise KeyError(f"Command not found for {key} in {json_file}")
+
+def extract_frames(video_path, output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    cap = cv2.VideoCapture(video_path)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    print(f'Total frames in video {video_path}: {total_frames}')
+
+    frame_count = 0
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame_filename = os.path.join(output_dir, f'{os.path.splitext(os.path.basename(video_path))[0]}_frame_{frame_count:04d}.jpg')
+        cv2.imwrite(frame_filename, frame)
+        frame_count += 1
+
+    cap.release()
+    print(f'Total frames extracted from {video_path}: {frame_count}')
+
+def model_process(model, save_to_folder, output_types):
+    model = model.split(':')[0]
+    current_dir = os.path.dirname(__file__)
+    input_path = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'data','uploads'))
+    folder_path = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'data','outputs'))
+    if "image" in output_types and "npz" in output_types:
+        supported_extensions = ['.mp4', '.png', '.npz']
+    elif "image" in output_types:
+        supported_extensions = ['.mp4', '.png']
+    elif "npz" in output_types: 
+        supported_extensions = ['.npz']
+        
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        file_name, file_extension = os.path.splitext(file_path)
+        if file_extension in supported_extensions: 
+            shutil.move(file_path, save_to_folder)
+
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        if os.path.isfile(file_path):
+            try: 
+                os.remove(file_path)
+                print(f"Deleted: {file_path}")
+            except OSError as e:
+                print(f"Error deleting {file_path}: {e}")
+
+    for filename in os.listdir(input_path):
+        file_path = os.path.join(input_path, filename)
+        if os.path.isfile(file_path):
+            try: 
+                os.remove(file_path)
+                print(f"Deleted: {file_path}")
+            except OSError as e:
+                print(f"Error deleting {file_path}: {e}")
+    print('success')
+    return
+
+def expose_preprocess():
+    current_dir = os.path.dirname(__file__)
+    folder_path = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'data','uploads'))
+    for filename in os.listdir(folder_path):
+        if filename.endswith(('.mp4', '.avi', '.mov')):
+            video_path = os.path.join(folder_path, filename)
+            extract_frames(video_path, folder_path)
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        if os.path.isfile(file_path) and filename.endswith('.mp4'):
+            try: 
+                os.remove(file_path)
+                print(f"Deleted: {file_path}")
+            except OSError as e:
+                print(f"Error deleting {file_path}: {e}")
+    print('The process of video has finished')
+    return
+
+def delete_files_in_directory(directory, extensions=None):
+    if not os.path.exists(directory):
+        print(f"Directory {directory} does not exist.")
+        return
+    
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            if extensions:
+                if any(filename.endswith(ext) for ext in extensions):
+                    os.remove(file_path)
+                    print(f"Deleted file: {file_path}")
+            else:
+                os.remove(file_path)
+                print(f"Deleted file: {file_path}")
+
+
 def inspect_container_volumes(container, volumes):
         mounts = container.attrs['Mounts']
         for mount in mounts:
@@ -37,20 +162,14 @@ def load_model_container_mapping():
             image_container_mapping = json.load(f)
     else:
         raise FileNotFoundError(f"JSON file '{json_file}' does not exist.")
-    # print("I am checking the image container mapping")
-    # print(image_container_mapping)
     return image_container_mapping
 
 def get_container_name(image_container_mapping, image_name): 
     container_name = None
-    # print('I get container name')
-    # print(image_container_mapping)
     for key in image_container_mapping.keys():
         # print(key)
         if key == image_name:
             container_name = image_container_mapping[key]
-        #     print('They are equal and i found image there')
-        # print(container_name)
     return container_name
 
 def run_container_existing_image(image_name, volumes, command_python):
@@ -110,14 +229,39 @@ def run_container_new_image(image_name, volumes):
 def get_image_docker_file(image_name):
     current_dir = os.path.dirname(__file__)
     os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'image_container_mapping.json'))
-    model_folder = os.path.join(os.getcwd(), '..', '..', '..', 'models', image_name )
-   # print(model_folder)
+    model_folder = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'models', image_name))
+    print(model_folder)
     dockerfile_path = os.path.join(model_folder, 'Dockerfile')
+    # model_folder = shlex.quote(model_folder)
+    print(dockerfile_path)
     return dockerfile_path, model_folder
 
-def build_image(image_name, model_folder):
-    image, _ = client.images.build(path=model_folder, tag=image_name)
-    return image
+def build_image(image_name, model_folder, dockerfile_path):
+    # try:
+    #     image, logs = client.images.build(path=model_folder, tag=image_name)
+    #     for log in logs:
+    #         print(log.get('stream', '').strip())
+    # except docker.errors.BuildError as build_error:
+    #     print(f"Build failed: {build_error}")
+    # except Exception as e:
+    #     print(f"Unexpected error: {e}")
+    # return image
+
+    command = [
+            'docker', 'build',
+            '-t', image_name,
+            '-f', dockerfile_path, 
+            model_folder
+        ]
+    result = subprocess.run(command, capture_output=True, text=True)
+    print(result.stdout)
+
+    if result.returncode != 0:
+        print(f"Error building image: {result.stderr}")
+        return False
+    else:
+        print(f"Image {image_name} built successfully!")
+        return True
 
 def delete_existing_container(container_name):    
     try:
@@ -171,13 +315,11 @@ def check_image_container(image_name, command):
     }
     #Get model_container names from json file
     image_container_mapping = load_model_container_mapping()
-    print("I am checking the image container mapping")
-    print(image_container_mapping)
     # Check if the container exists in the JSON mapping
     # We have to check that the existing container has been run with a volume whose directories as defined above, otherwise delete it 
     container_name = get_container_name(image_container_mapping, image_name)
-    #There is no container with this name, we will create one based on the image 
-    #We have to make sure that the created container has volume folders 
+    # There is no container with this name, we will create one based on the image 
+    # We have to make sure that the created container has volume folders 
     print("what is the container name")
     print(container_name)
     if container_name == "" or container_name== None or len(container_name)==0:
@@ -188,13 +330,16 @@ def check_image_container(image_name, command):
             return run_container_existing_image(image_name, volumes, command)
             print("i am done!!!!")
         else:
-            dockerfile_path, model_folder = get_image_docker_file(image_name)
+            dockerfile_path, model_folder = get_image_docker_file(image_name.split(':')[0])
+            print("this is 1")
             #Build an image and run container 
             if os.path.exists(dockerfile_path):
                 # Build the image
-                image, _ = build_image(image_name, model_folder)
+                print("this is 2")
+                build_image(image_name, model_folder, dockerfile_path)
+                print("this is 3")
                 # Create a new container from the built image
-                return run_container_new_image(image.name, volumes)
+                return run_container_new_image(image_name, volumes)
             else:
                 # If neither model nor container exists and no Dockerfile is found
                 raise ValueError(f"No container or Dockerfile found for model: {image_name}")
@@ -217,13 +362,9 @@ def check_image_container(image_name, command):
     #         delete_existing_container(container_name)
     #         return run_container_existing_image(image_name, volumes)
     else:
-        # container = client.containers.get('expose11')
-        print("what did I get")
         docker_image = image_name.split(':')[0]
-        print("docker image is this")
-        print(docker_image)
-
         found = False
+        print(container_name)
         for name in container_name:
             if docker_image == name:
                 delete_existing_container(docker_image)
@@ -234,12 +375,16 @@ def check_image_container(image_name, command):
             run_container_existing_image(image_name, volumes, command)
 
 
-def run_docker_container(model, save_to_folder, extensions=['.npz', '.png']):
-    #print(docker.__version__)
-    #print('Hi')
+def run_docker_container(model, save_to_folder, file_extension, output_types):
+    # print(docker.__version__)
     # #!! match  both the model name sent by frontend and the one that's in json file 
-    command = get_command(model)
-    container = check_image_container(model, command)
+    command = get_command(model, file_extension)
+    model_name = model.split(':')[0]
+    supported_extensions = ['.mp4', '.avi', '.mov']
+    if model_name == 'expose' and file_extension in supported_extensions: 
+        expose_preprocess()
+    check_image_container(model, command)
+    model_process(model, save_to_folder, output_types)
 
 
     # print('I checked the image')

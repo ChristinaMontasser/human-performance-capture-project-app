@@ -1,18 +1,23 @@
 {
+    "expose:latest": [
+        "expose"
+    ],
+    "4d-humans-video-2:latest": [
+        "new-container-test-4d"
+    ],
     "expose1:latest": [
         "expose11"
     ],
     "pare_video:latest": [
         "pare_video"
     ],
-    "expose:latest": [
-        "expose",
-        "test"
-    ],
     "pare:latest": [
         "Pare"
     ],
     "4d-humans-video:latest": [
+        "cb00e3b38767",
+        "awesome_goldberg",
+        "4d-humans-video",
         "4d-video-v9"
     ],
     "docker-4d-humans-v2:latest": [],

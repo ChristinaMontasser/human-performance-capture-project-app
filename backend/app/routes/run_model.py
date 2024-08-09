@@ -21,24 +21,16 @@ def upload_image():
 
     #Recieve the data from the user request
     image = request.files['image']
-    #model = map_model_name(request.form['model'])
-    # model = 'expose1:latest'
     filename = secure_filename(image.filename)
     file_extension = os.path.splitext(filename)[1] 
-
-
-
+    output_types = request.form['output_types']
     model = request.form['model']
-    print("the model name is ")
     model = model.lower()
     model = f'{model}:latest'
-    print(model)
     save_to_folder = request.form['save_to_folder']
-   # print(save_to_folder)
     if image.filename == '':
         logging.error("No image filename")
         return jsonify({"error": "No selected file"}), 400
-    #Save the imgae 
     filename = secure_filename(image.filename)
     image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     try:
@@ -51,20 +43,10 @@ def upload_image():
         return jsonify({"error": "Image not saved"}), 500
 
     try:
-        # print(save_to_folder)
-
-        # if file_extension.lower() == '.jpg' or file_extension.lower() == '.jpeg' or file_extension.lower() == '.png':
-        #     result = run_model(model, save_to_folder)
-        # if file_extension.lower() == '.mp4' or file_extension.lower() == '.avi':
-        #     result = run_model(model, save_to_folder)
-
-        result = run_model(model, save_to_folder)
+        result = run_model(model, save_to_folder, file_extension, output_types)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    #Run the model (there, it should check thecontainer existancy) 
-   # result = run_model(model)
-    #return jsonify(result)
 
 #jsonify converts a Python dictionary into a json response
 

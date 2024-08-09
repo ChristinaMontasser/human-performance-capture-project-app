@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox, OptionMenu
 import requests
 import os
 import subprocess
+import shlex
 
 class UploadFrame(tk.Frame):
     def __init__(self, parent, show_result_callback, *args, **kwargs):
@@ -25,12 +26,6 @@ class UploadFrame(tk.Frame):
 
         self.model_info_label = tk.Label(self, text="")
         self.model_info_label.pack(pady=10)
-        
-        self.start_button = tk.Button(self, text="Start Model", command=self.start_container)
-        self.start_button.pack(pady=10)
-        
-        self.submit_button = tk.Button(self, text="Upload", command=self.upload_input)
-        self.submit_button.pack(pady=20)
 
         self.selection_label = tk.Label(self, text="Select Output Types:")
         self.selection_label.pack(pady=10)
@@ -52,13 +47,16 @@ class UploadFrame(tk.Frame):
 
         self.output_path_label = tk.Label(self, text="")
         self.output_path_label.pack(pady=10)
+
+        self.submit_button = tk.Button(self, text="Upload", command=self.upload_input)
+        self.submit_button.pack(pady=20)
         
         self.file_path = None
         self.folder_path = None
 
         self.model_info = {
             "Pare": "Dealing with occlusion",
-            "ExPose": "Fast and accurate model\n<only accept video with single person or image>",
+            "ExPose": "Fast and accurate model\n<accept video with only single person>",
             "4DHumans": "Track multiple person"
         }
 
@@ -106,7 +104,7 @@ class UploadFrame(tk.Frame):
         if self.output_path:
             self.output_path_label.config(text=f"Selected output path: {self.output_path}")
 
-    def check_single_person(self, video_path):
+    def check_single_person(self, video_path, model, conf_threshold=0.5):
         script_path = os.path.join(os.path.dirname(__file__), 'detect_single_human.py')
         model_path = os.path.join(os.path.dirname(__file__), 'models', 'yolov5s.pt')
 
@@ -120,90 +118,14 @@ class UploadFrame(tk.Frame):
             messagebox.showerror("Error", f"Model file {model_path} does not exist.")
             return 2  
         
+        script_path_quoted = shlex.quote(script_path)
+
         result = subprocess.run(
-                ['python', script_path, '--model_path', model_path, '--video_path', video_path],
+                ['python', script_path_quoted, '--model_path', model_path, '--video_path', video_path],
                 capture_output=True, text=True, check=True
             )
         
         return result.returncode
-
-    # def check_single_person(self, video_path):
-    #     script_path = os.path.join(os.path.dirname(__file__), 'detect_single_human.py')
-    #     model_path = os.path.join(os.path.dirname(__file__), 'models', 'yolov5s.pt')
-    
-    #     if not os.path.exists(script_path):
-    #         print(f"Error: Script file {script_path} does not exist.")
-    #         messagebox.showerror("Error", f"Script file {script_path} does not exist.")
-    #         return 2  # Indicate script file not found error
-    
-    #     if not os.path.exists(model_path):
-    #         print(f"Error: Model file {model_path} does not exist.")
-    #         messagebox.showerror("Error", f"Model file {model_path} does not exist.")
-    #         return 2  # Indicate model file not found error
-    
-    #     print(f"Running script: {script_path} with model: {model_path} on video: {video_path}")
-    #     messagebox.showinfo("Debug", f"Running script: {script_path} with model: {model_path} on video: {video_path}")
-
-    #     try:
-    #         result = subprocess.run(
-    #             ['python', script_path, '--model_path', model_path, '--video_path', video_path],
-    #             capture_output=True, text=True, check=True
-    #         )
-    #         print(f"Script output: {result.stdout}")
-    #         print(f"Script error: {result.stderr}")
-    #         print(f"Script return code: {result.returncode}")
-    #         messagebox.showinfo("Debug", f"Script output: {result.stdout}\nScript error: {result.stderr}\nScript return code: {result.returncode}")
-    #         return result.returncode
-    #     except subprocess.CalledProcessError as e:
-    #         print(f"Error running script: {e.stderr}, Return code: {e.returncode}")
-    #         messagebox.showerror("Error", f"Error running script: {e.stderr}, Return code: {e.returncode}")
-    #         return e.returncode
-    #     except FileNotFoundError:
-    #         print("Error: Python executable not found.")
-    #         messagebox.showerror("Error", "Python executable not found.")
-    #         return 2  # Indicate Python executable not found error
-    #     except Exception as e:
-    #         print(f"Unexpected error: {str(e)}")
-    #         messagebox.showerror("Error", f"Unexpected error: {str(e)}")
-    #         return 2  # Indicate an unknown error
-
-    
-
-    # def upload_input(self):
-    #     if not self.file_path and not self.folder_path:
-    #         messagebox.showerror("Error", "No file or folder selected")
-    #         return
-        
-    #     selected_model = self.container_var.get()
-    #     if selected_model == "ExPose" and self.file_path and self.file_path.lower().endswith(('.mp4', '.avi')):
-    #         person_check_result = self.check_single_person(self.file_path)
-    #         if person_check_result == 1:
-    #             messagebox.showerror("Error", "The selected video contains more than one person. Please select another video.")
-    #             return
-        
-    #     selected_options = []
-    #     if self.npz_var.get():
-    #         selected_options.append("npz")
-    #     if self.image_var.get():
-    #         selected_options.append("image")
-
-    #     if not selected_options:
-    #         messagebox.showerror("Error", "No output types selected")
-    #         return
-        
-    #     container_name = self.container_var.get()
-    #     try:
-    #         with open(self.file_path, 'rb') as image_file:
-    #             files = {'image': image_file}
-    #             data = {'model': container_name, 'save_to_folder': self.output_path}  # Use 'model' to match the backend expectation
-    #             response = requests.post("http://127.0.0.1:5000/upload", files=files, data=data)
-    #             if response.status_code == 200:
-    #                 self.show_result_callback(response.json())
-    #             else:
-    #                 messagebox.showerror("Error", f"Failed to upload image: {response.json()}")
-    #     except Exception as e:
-    #         messagebox.showerror("Error", str(e))
-
 
     def upload_input(self):
         if not self.file_path and not self.folder_path:
@@ -250,7 +172,10 @@ class UploadFrame(tk.Frame):
             try:
                 with open(self.file_path, 'rb') as image_file:
                     files = {'image': image_file}
-                    data = {'model': container_name, 'save_to_folder': self.output_path}  # Use 'model' to match the backend expectation
+                    data = {'model': container_name, 
+                            'save_to_folder': self.output_path, 
+                            'output_types': ','.join(selected_options)}  # Use 'model' to match the backend expectation
+
                     response = requests.post("http://127.0.0.1:5000/upload", files=files, data=data)
                     if response.status_code == 200:
                         self.show_result_callback(response.json())
@@ -259,11 +184,12 @@ class UploadFrame(tk.Frame):
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
-        if selected_model == "ExPose" and self.file_path and self.file_path.lower().endswith(('.mp4', '.avi')):
-            loading_window = show_loading_window()
-            self.after(100, check_person_and_proceed)
-        else:
-            proceed_with_upload()
+        # if selected_model == "ExPose" and self.file_path and self.file_path.lower().endswith(('.mp4', '.avi')):
+        #     loading_window = show_loading_window()
+        #     self.after(100, check_person_and_proceed)
+        # else:
+        #     proceed_with_upload()
+        proceed_with_upload()
 
 
     def start_container(self, container_name=None):
