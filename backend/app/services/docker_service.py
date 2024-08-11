@@ -16,7 +16,7 @@ def get_command(model, file_extension):
     #We have common format:
     # model-name_datatype_command e.g. "4d-human_video_command", "4d-human_image_command"
     # So, split model name, + check sent data that's now save in the file video or image, + command word  
-
+    current_dir = os.path.dirname(__file__)
     json_file = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'models', 'command.json'))
 
     # Path to the uploads folder
@@ -335,9 +335,7 @@ def check_image_container(image_name, command):
             #Build an image and run container 
             if os.path.exists(dockerfile_path):
                 # Build the image
-                print("this is 2")
                 build_image(image_name, model_folder, dockerfile_path)
-                print("this is 3")
                 # Create a new container from the built image
                 return run_container_new_image(image_name, volumes)
             else:

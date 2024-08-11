@@ -4,6 +4,7 @@ import requests
 import os
 import subprocess
 import shlex
+import sys
 
 class UploadFrame(tk.Frame):
     def __init__(self, parent, show_result_callback, *args, **kwargs):
@@ -104,7 +105,7 @@ class UploadFrame(tk.Frame):
         if self.output_path:
             self.output_path_label.config(text=f"Selected output path: {self.output_path}")
 
-    def check_single_person(self, video_path, model, conf_threshold=0.5):
+    def check_single_person(self, video_path, conf_threshold=0.5):
         script_path = os.path.join(os.path.dirname(__file__), 'detect_single_human.py')
         model_path = os.path.join(os.path.dirname(__file__), 'models', 'yolov5s.pt')
 
@@ -119,12 +120,16 @@ class UploadFrame(tk.Frame):
             return 2  
         
         script_path_quoted = shlex.quote(script_path)
+        print('i am testing the human in video')
 
         result = subprocess.run(
-                ['python', script_path_quoted, '--model_path', model_path, '--video_path', video_path],
-                capture_output=True, text=True, check=True
+                [sys.executable, script_path, '--model_path', model_path, '--video_path', video_path], 
+                env=os.environ.copy(), 
+                check=True,
+                capture_output=True,
+                text=True
             )
-        
+        print('i am done with video')
         return result.returncode
 
     def upload_input(self):
@@ -184,12 +189,11 @@ class UploadFrame(tk.Frame):
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
-        # if selected_model == "ExPose" and self.file_path and self.file_path.lower().endswith(('.mp4', '.avi')):
-        #     loading_window = show_loading_window()
-        #     self.after(100, check_person_and_proceed)
-        # else:
-        #     proceed_with_upload()
-        proceed_with_upload()
+        if selected_model == "ExPose" and self.file_path and self.file_path.lower().endswith(('.mp4', '.avi')):
+            loading_window = show_loading_window()
+            self.after(100, check_person_and_proceed)
+        else:
+            proceed_with_upload()
 
 
     def start_container(self, container_name=None):

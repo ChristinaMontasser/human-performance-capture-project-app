@@ -1,7 +1,5 @@
 {
-    "expose:latest": [
-        "expose"
-    ],
+    "expose:latest": [],
     "4d-humans-video-2:latest": [
         "new-container-test-4d"
     ],
