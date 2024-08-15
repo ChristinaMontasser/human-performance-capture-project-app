@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, OptionMenu
 import requests
-import os
+import os, json 
 import subprocess
 import shlex
 import sys
@@ -49,37 +49,34 @@ class UploadFrame(tk.Frame):
         self.output_path_label = tk.Label(self, text="")
         self.output_path_label.pack(pady=10)
 
-        self.submit_button = tk.Button(self, text="Upload", command=self.upload_input)
+        self.submit_button = tk.Button(self, text="Start", command=self.upload_input)
         self.submit_button.pack(pady=20)
         
         self.file_path = None
         self.folder_path = None
+        self.output_path =None
 
-        self.model_info = {
-            "Pare": "Dealing with occlusion",
-            "ExPose": "Fast and accurate model\n<accept video with only single person>",
-            "4DHumans": "Track multiple person"
-        }
+        with open('model_description.json', 'r') as f:
+            self.model_info = json.load(f)
 
-        self.models = {
-            "image": ["ExPose", "4DHumans", "Pare"],
-            "video": ["ExPose", "4DHumans", "Pare"]
-        }
+        with open('model_input_data_type.json', 'r') as f:
+            self.models = json.load(f)
 
-        self.populate_models()
+        self.filter_models()
     
-    def populate_models(self):
-        model_names = ["ExPose", "4DHumans", "Pare"]
+    def filter_models(self):
+        combined_values = self.models["image"] + self.models["video"]
+        model_names = list(set(combined_values))
         self.update_container_dropdown(model_names)
 
-    def update_container_dropdown(self, container_names):
+    def update_container_dropdown(self, model_names):
         self.container_dropdown['menu'].delete(0, 'end')
-        for name in container_names:
+        for name in model_names:
             self.container_dropdown['menu'].add_command(label=name, command=tk._setit(self.container_var, name, self.update_model_info))
         
-        if container_names:
-            self.container_var.set(container_names[0])
-            self.update_model_info(container_names[0])
+        if model_names:
+            self.container_var.set(model_names[0])
+            self.update_model_info(model_names[0])
         else:
             self.container_var.set("No containers found")
 
@@ -136,33 +133,38 @@ class UploadFrame(tk.Frame):
         if not self.file_path and not self.folder_path:
             messagebox.showerror("Error", "No file or folder selected")
             return
-
         selected_model = self.container_var.get()
+        if selected_model == "ExPose" and self.file_path and self.file_path.lower().endswith(('.mp4', '.avi')):
+            loading_window = self.show_loading_window()
+            self.after(100, self.check_person_and_proceed,loading_window)
+        else:
+            self.upload()
 
-        def show_loading_window():
-            loading_window = tk.Toplevel(self)
-            loading_window.title("Processing")
-            tk.Label(loading_window, text="Checking video for single person, please wait...").pack(padx=20, pady=20)
-            return loading_window
 
-        def close_loading_window(window):
-            window.destroy()
+    def show_loading_window(self):
+        loading_window = tk.Toplevel(self)
+        loading_window.title("Processing")
+        tk.Label(loading_window, text="Checking video for single person, please wait...").pack(padx=20, pady=20)
+        return loading_window
+        
+    def close_loading_window(self, window):
+        window.destroy()
 
-        def check_person_and_proceed():
-            person_check_result = self.check_single_person(self.file_path)
-            close_loading_window(loading_window)
+    def check_person_and_proceed(self, loading_window ):
+        person_check_result = self.check_single_person(self.file_path)
+        self.close_loading_window(loading_window)
 
-            if person_check_result == 1:
-                messagebox.showerror("Error", "The selected video contains more than one person. Please select another video.")
-                return
-            elif person_check_result == 0:
-                messagebox.showinfo("Success", "The video contains only one person and is suitable for processing.")
-                proceed_with_upload()
-            else:
-                messagebox.showerror("Error", "There was an error processing the video. Please check the file and try again.")
-                return
+        if person_check_result == 1:
+            messagebox.showerror("Error", "The selected video contains more than one person. Please select another video.")
+            return
+        elif person_check_result == 0:
+            messagebox.showinfo("Success", "The video contains only one person and is suitable for processing.")
+            self.upload()
+        else:
+            messagebox.showerror("Error", "There was an error processing the video. Please check the file and try again.")
+            return
 
-        def proceed_with_upload():
+    def upload(self):
             selected_options = []
             if self.npz_var.get():
                 selected_options.append("npz")
@@ -189,27 +191,6 @@ class UploadFrame(tk.Frame):
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
-        if selected_model == "ExPose" and self.file_path and self.file_path.lower().endswith(('.mp4', '.avi')):
-            loading_window = show_loading_window()
-            self.after(100, check_person_and_proceed)
-        else:
-            proceed_with_upload()
-
-
-    def start_container(self, container_name=None):
-        if container_name is None:
-            container_name = self.container_var.get()
-
-        try:
-            data = {'container_name': container_name}
-            response = requests.post("http://localhost:5000/start", json=data)
-           
-            if response.status_code == 200:
-                messagebox.showinfo("Success", f"Started container: {container_name}")
-            else:
-                messagebox.showerror("Error", f"Failed to start container: {response.json()}")
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
 
 if __name__ == "__main__":
     root = tk.Tk()

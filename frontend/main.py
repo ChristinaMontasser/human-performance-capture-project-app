@@ -6,7 +6,7 @@ class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title("Parameter Estimation")
-        self.geometry("600x400")
+        self.geometry("600x600")
         
         self.container = tk.Frame(self)
         self.container.pack(fill="both", expand=True)
@@ -24,7 +24,7 @@ class App(tk.Tk):
         frame.tkraise()
     #!! Will be changed to show images or video 
     def show_result(self, result):
-        self.result_frame.display_results(result)
+        self.result_frame.display_results(result, self.upload_frame.output_path)
         self.show_frame(self.result_frame)
 
 if __name__ == "__main__":

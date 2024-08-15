@@ -1,26 +1,41 @@
-import tkinter as tk
+# import tkinter as tk
+# import webbrowser
 
-class ResultFrame(tk.Frame):
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+# class ResultFrame(tk.Frame):
+#     def __init__(self, parent, output_path, *args, **kwargs):
+#         super().__init__(parent, *args, **kwargs)
         
-        self.label = tk.Label(self, text="Model Output Results")
-        self.label.pack(pady=10)
+#         self.label = tk.Label(self, text="Model Output Results")
+#         self.label.pack(pady=10)
         
-        self.result_text = tk.Text(self, wrap="word", height=10, width=50)
-        self.result_text.pack(pady=10)
+#         self.result_text = tk.Text(self, wrap="word", height=10, width=50)
+#         self.result_text.pack(pady=10)
 
-    def display_results(self, result):
-        self.result_text.config(state="normal")
-        self.result_text.delete("1.0", "end")
-        self.result_text.insert("1.0", result)
-        self.result_text.config(state="disabled")
+#         # Folder path where the results are saved
+#         self.folder_path = output_path
+        
+#         # Add a label for completion message with a hyperlink
+#         self.link_label = tk.Label(self, text="Process has successfully completed, please check this folder", fg="blue", cursor="hand2")
+#         self.link_label.pack(pady=10)
+        
+#         # Bind the hyperlink click event
+#         self.link_label.bind("<Button-1>", self.open_folder)
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("Model Output Results")
-    ResultFrame(root).pack(fill="both", expand=True)
-    root.mainloop()
+#     def display_results(self, result):
+#         self.result_text.config(state="normal")
+#         self.result_text.delete("1.0", "end")
+#         self.result_text.insert("Process has successfully completed, please check this folder", result)
+#         self.result_text.config(state="disabled")
+
+#     def open_folder(self, event):
+#         # Open the folder in the file explorer
+#         webbrowser.open(f"file://{self.folder_path}")
+
+# if __name__ == "__main__":
+#     root = tk.Tk()
+#     root.title("Model Output Results")
+#     ResultFrame(root).pack(fill="both", expand=True)
+#     root.mainloop()
 
 
 
@@ -86,3 +101,39 @@ if __name__ == "__main__":
 #     result_frame.load_and_display_files(output_folder)
     
 #     root.mainloop()
+
+
+import tkinter as tk
+import os
+
+class ResultFrame(tk.Frame):
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        
+
+        self.label = tk.Label(self, text="Model Output Results")
+        self.label.pack(pady=10)
+        
+        self.result_text = tk.Text(self, wrap="word", height=10, width=50)
+        self.result_text.pack(pady=10)
+
+        self.open_folder_button = tk.Button(self, text="Open Results Folder", command=self.open_folder)
+        self.open_folder_button.pack(pady=10)
+
+    def display_results(self, result, folder_path):
+        self.folder_path = folder_path
+
+        self.result_text.config(state="normal")
+        self.result_text.delete("1.0", "end")
+#        self.result_text.insert("1.0", result)
+        self.result_text.insert("end", "\n\nProcess has successfully completed. Please check the folder.")
+        self.result_text.config(state="disabled")
+
+    def open_folder(self):
+        # Open the folder in the file explorer
+        if os.path.isdir(self.folder_path):
+            os.startfile(self.folder_path)  # This works on Windows
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Model Output Results")

@@ -167,17 +167,12 @@ def load_model_container_mapping():
 def get_container_name(image_container_mapping, image_name): 
     container_name = None
     for key in image_container_mapping.keys():
-        # print(key)
         if key == image_name:
             container_name = image_container_mapping[key]
     return container_name
 
 def run_container_existing_image(image_name, volumes, command_python):
     print('I run container with existing image and heres the image name')
-    print(image_name)
-#    container = client.containers.run(image_name.split(':')[0], volumes=volumes, name=image_name.split(':')[0]+'1' , environment={"NVIDIA_VISIBLE_DEVICES": "all"}
-#, detach=True)
-
     container = client.containers.run(
     image=image_name.split(':')[0],
     volumes=volumes,
@@ -194,7 +189,6 @@ def run_container_existing_image(image_name, volumes, command_python):
     environment={"NVIDIA_VISIBLE_DEVICES": "all"},
     command=command_python
     )
-    
     container.reload()
     
     # Check container status
@@ -220,10 +214,10 @@ def run_container_existing_image(image_name, volumes, command_python):
     #         'container_name': container.name}
     return container
 
-def run_container_new_image(image_name, volumes):
-    container = client.containers.run(image_name, name=image_name, volumes=volumes,  runtime="gpus", environment={"gpus": "all"}, detach=True)
-    # return {'container_id':container.id, 
-    #                 'container_name': container.name}
+def run_container_new_image(image_name, volumes, command_python):
+    container = client.containers.run(image_name, name=image_name, volumes=volumes,  runtime="gpus", environment={"gpus": "all"}, detach=True,
+                                        command=command_python)
+
     return container
 
 def get_image_docker_file(image_name):
@@ -237,16 +231,6 @@ def get_image_docker_file(image_name):
     return dockerfile_path, model_folder
 
 def build_image(image_name, model_folder, dockerfile_path):
-    # try:
-    #     image, logs = client.images.build(path=model_folder, tag=image_name)
-    #     for log in logs:
-    #         print(log.get('stream', '').strip())
-    # except docker.errors.BuildError as build_error:
-    #     print(f"Build failed: {build_error}")
-    # except Exception as e:
-    #     print(f"Unexpected error: {e}")
-    # return image
-
     command = [
             'docker', 'build',
             '-t', image_name,
@@ -308,7 +292,7 @@ def run_command_in_container(container, command):
         print(f"An error occurred: {e}")
 
 def check_image_container(image_name, command):
-   # print(f'image_name {image_name}')
+    #Define volumes that will be bind with the cont
     volumes = {
         os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/workspace/data/input', 'mode': 'ro'},
         os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/workspace/data/output', 'mode': 'rw'}
@@ -320,15 +304,11 @@ def check_image_container(image_name, command):
     container_name = get_container_name(image_container_mapping, image_name)
     # There is no container with this name, we will create one based on the image 
     # We have to make sure that the created container has volume folders 
-    print("what is the container name")
-    print(container_name)
     if container_name == "" or container_name== None or len(container_name)==0:
         # connect to docker server 
         # If the image exists but the container doesn't, create a new container
         if image_name in image_container_mapping.keys():
-            print('IM HERE')
             return run_container_existing_image(image_name, volumes, command)
-            print("i am done!!!!")
         else:
             dockerfile_path, model_folder = get_image_docker_file(image_name.split(':')[0])
             print("this is 1")
@@ -337,28 +317,10 @@ def check_image_container(image_name, command):
                 # Build the image
                 build_image(image_name, model_folder, dockerfile_path)
                 # Create a new container from the built image
-                return run_container_new_image(image_name, volumes)
+                return run_container_existing_image(image_name, volumes) #run_container_existing_image
             else:
                 # If neither model nor container exists and no Dockerfile is found
                 raise ValueError(f"No container or Dockerfile found for model: {image_name}")
-    # else:
-    #     # container = client.containers.get('expose11')
-    #     print("what did I get")
-    #     docker_image = image_name.split(':')[0]
-    #     print("docker image is this")
-    #     print(docker_image)
-    #     container = client.containers.get(container_name)
-    #     # print("what did I get")
-    #     print(container)
-    #     is_matched = inspect_container_volumes(container, volumes=volumes)
-    #     if (is_matched):
-    #         print('Is matched')
-    #         return container
-    #     else:
-    #        #We have to delete the old one and create a new container because it doesn't bind with the data folder 
-    #        #And docker doesn't support to update the container to bind a volume 
-    #         delete_existing_container(container_name)
-    #         return run_container_existing_image(image_name, volumes)
     else:
         docker_image = image_name.split(':')[0]
         found = False
@@ -374,8 +336,6 @@ def check_image_container(image_name, command):
 
 
 def run_docker_container(model, save_to_folder, file_extension, output_types):
-    # print(docker.__version__)
-    # #!! match  both the model name sent by frontend and the one that's in json file 
     command = get_command(model, file_extension)
     model_name = model.split(':')[0]
     supported_extensions = ['.mp4', '.avi', '.mov']
@@ -384,16 +344,6 @@ def run_docker_container(model, save_to_folder, file_extension, output_types):
     check_image_container(model, command)
     model_process(model, save_to_folder, output_types)
 
-
-    # print('I checked the image')
-    # print(container.top())
-    # #instead of zero, it should be specified using the data type 
-    # if container.status != 'running':
-    #     print('I will start a container')
-    #     container.start()
-    # print('I have already get a command')
-    # run_command_in_container(container, command)
-    # print('I have already ran the model')
 
 
 

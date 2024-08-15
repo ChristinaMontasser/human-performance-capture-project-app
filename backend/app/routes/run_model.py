@@ -7,12 +7,9 @@ import logging
 #Define functionalities as blueprints using the Blueprint function
 run_model_blueprint = Blueprint('run_model', __name__)
 logging.basicConfig(level=logging.DEBUG)
-#curl -X POST http://127.0.0.1:5000/upload \
-#     -F "image=@ path/image.jpg" \
-#     -F "model=model1"
 
 #Define a route, url, for the 'upload' funcrionality so the server can determine which function should process the request.
-#!! the only function that should be called by the frontend 
+#The only function that should be called by the frontend 
 @run_model_blueprint.route('/upload', methods=['POST'])
 def upload_image():
     if 'image' not in request.files and 'model' not in request.form:
@@ -22,8 +19,8 @@ def upload_image():
     #Recieve the data from the user request
     image = request.files['image']
     filename = secure_filename(image.filename)
-    file_extension = os.path.splitext(filename)[1] 
-    output_types = request.form['output_types']
+    file_extension = os.path.splitext(filename)[1]  #image_or_video
+    output_types = request.form['output_types'] 
     model = request.form['model']
     model = model.lower()
     model = f'{model}:latest'
@@ -48,17 +45,3 @@ def upload_image():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-#jsonify converts a Python dictionary into a json response
-
-'''@run_model_blueprint.route('/containers', methods=['GET'])
-def list_docker_containers():
-    result = list_containers()
-    return jsonify(result)'''
-
-# ##!! Only upload route is called by the frontend and the backend is responsible of all logics from whether a container exist or not
-# #!! Also the front end start, upload functionalities will be merged to one function. 
-# @run_model_blueprint.route('/start', methods=['POST'])
-# def start_docker_container():
-#     container_name = request.json.get('container_name')
-#     result = start_container(container_name)
-#     return jsonify(result)

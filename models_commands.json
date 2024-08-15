@@ -1,5 +1,0 @@
-{
-    "4d-human_video_command": "python track.py video.source='example_data/videos/gymnasts.mp4'",
-    "4d-human_image_command": "python ",
-    "expose_video_command": ""
-}
