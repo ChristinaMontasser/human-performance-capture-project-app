@@ -76,7 +76,7 @@ def model_process(model, save_to_folder, output_types):
     elif "image" in output_types:
         supported_extensions = ['.mp4', '.png']
     elif "npz" in output_types: 
-        supported_extensions = ['.npz']
+        supported_extensions = ['.npz', '.pkl']
         
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
@@ -186,8 +186,14 @@ def run_container_existing_image(image_name, volumes, command_python):
             capabilities=[['gpu']]
         )
     ],
-    environment={"NVIDIA_VISIBLE_DEVICES": "all"},
-    command=command_python
+    environment={"NVIDIA_VISIBLE_DEVICES": "all", "DISPLAY": ":0"},  # Adjust as necessary for your setup,
+     command=[
+        "/bin/bash", "-c", 
+     command_python
+    ],
+    tty=True,
+    stdin_open=True,
+    #command=["/bin/bash", "/opt/conda/envs/4D-humans/bin/pip install phalp[all]@git+https://github.com/brjathu/PHALP.git", command_python]
     )
     container.reload()
     
@@ -347,7 +353,6 @@ def run_docker_container(model, save_to_folder, file_extension, output_types):
 
 
 
-    #run_command_in_container('4d-video-v9', "python track.py video.source='example_data/videos/gymnasts.mp4'")
     
     #Now we have to send the output that's in output folder to the 'Save To' folder
     #copy from one data/outputs to the save_to_folder

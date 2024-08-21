@@ -1,7 +1,7 @@
 {
-    "pare_image":"MESA_GL_VERSION_OVERRIDE=4.1 python scripts/demo.py --mode folder --image_folder /workspace/PARE/images --output_folder /workspace/data/output",
+    "pare_image":"MESA_GL_VERSION_OVERRIDE=4.1 python scripts/demo.py --mode folder --image_folder /workspace/data/input --output_folder /workspace/data/output",
     "pare_video":"Pare env MESA_GL_VERSION_OVERRIDE==4.1  python scripts/demo.py --vid_file /workspace/data/input --output_folder /workspace/data/output", 
     "expose_image":"sh -c 'python demo.py --image-folder /workspace/data/input --exp-cfg data/conf.yaml --show=False --output-folder OUTPUT_FOLDER --save-params True --save-vis True --save-mesh True && python npz_transform.py --input-folder OUTPUT_FOLDER --output-folder /workspace/data/output && python move_png.py --input-folder OUTPUT_FOLDER --output-folder /workspace/data/output'",
     "expose_video":"sh -c 'python demo.py --image-folder /workspace/data/input --exp-cfg data/conf.yaml --show=False --output-folder OUTPUT_FOLDER --save-params True --save-vis True --save-mesh True && python npz_transform.py --input-folder OUTPUT_FOLDER --output-folder npz_transformed && python npz_integration.py --input-folder npz_transformed --output-folder /workspace/data/output && python frames_to_video.py --input-folder OUTPUT_FOLDER --output-folder /workspace/data/output'", 
-    "4dhumans_video":"python track.py video.source='example_data/videos/gymnasts.mp4'"
+    "4dhumans_video":"sh -c '/opt/conda/envs/4D-humans/bin/pip install phalp[all]@git+https://github.com/brjathu/PHALP.git && python track.py video.source='/workspace/data/input/gymnasts.mp4''"
 }

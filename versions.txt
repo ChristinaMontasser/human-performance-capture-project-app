@@ -15,3 +15,6 @@ v3 --> finalize
 
 v4 --> backend 
 	v4.1 --> run commands in container, save to chosen file, choose result type, updates and splitting all scenerios for containers and images 
+
+v6 --> REAL FINAL
+	v6.1 --> some updates, window, display result, and others...  
