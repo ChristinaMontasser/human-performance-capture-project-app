@@ -5,6 +5,9 @@ import os, json
 import subprocess
 import shlex
 import sys
+project_root1 = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(project_root1)
+from backend.app.models_preprocessing import expose
 
 class UploadFrame(tk.Frame):
     def __init__(self, parent, show_result_callback, *args, **kwargs):
@@ -102,57 +105,20 @@ class UploadFrame(tk.Frame):
         if self.output_path:
             self.output_path_label.config(text=f"Selected output path: {self.output_path}")
 
-    def check_single_person(self, video_path, conf_threshold=0.5):
-        script_path = os.path.join(os.path.dirname(__file__), 'detect_single_human.py')
-        model_path = os.path.join(os.path.dirname(__file__), 'models', 'yolov5s.pt')
-
-        if not os.path.exists(script_path):
-            print(f"Error: Script file {script_path} does not exist.")
-            messagebox.showerror("Error", f"Script file {script_path} does not exist.")
-            return 2  
-    
-        if not os.path.exists(model_path):
-            print(f"Error: Model file {model_path} does not exist.")
-            messagebox.showerror("Error", f"Model file {model_path} does not exist.")
-            return 2  
-        
-        script_path_quoted = shlex.quote(script_path)
-        print('i am testing the human in video')
-
-        result = subprocess.run(
-                [sys.executable, script_path, '--model_path', model_path, '--video_path', video_path], 
-                env=os.environ.copy(), 
-                check=True,
-                capture_output=True,
-                text=True
-            )
-        print('i am done with video')
-        return result.returncode
-
     def upload_input(self):
         if not self.file_path and not self.folder_path:
             messagebox.showerror("Error", "No file or folder selected")
             return
         selected_model = self.container_var.get()
         if selected_model == "ExPose" and self.file_path and self.file_path.lower().endswith(('.mp4', '.avi')):
-            loading_window = self.show_loading_window()
+            loading_window = expose.show_loading_window(self)
             self.after(100, self.check_person_and_proceed,loading_window)
         else:
             self.upload()
 
-
-    def show_loading_window(self):
-        loading_window = tk.Toplevel(self)
-        loading_window.title("Processing")
-        tk.Label(loading_window, text="Checking video for single person, please wait...").pack(padx=20, pady=20)
-        return loading_window
-        
-    def close_loading_window(self, window):
-        window.destroy()
-
     def check_person_and_proceed(self, loading_window ):
-        person_check_result = self.check_single_person(self.file_path)
-        self.close_loading_window(loading_window)
+        person_check_result = expose.check_single_person(self.file_path)
+        expose.close_loading_window(loading_window)
 
         if person_check_result == 1:
             messagebox.showerror("Error", "The selected video contains more than one person. Please select another video.")
@@ -181,7 +147,7 @@ class UploadFrame(tk.Frame):
                     files = {'image': image_file}
                     data = {'model': container_name, 
                             'save_to_folder': self.output_path, 
-                            'output_types': ','.join(selected_options)}  # Use 'model' to match the backend expectation
+                            'output_types': ','.join(selected_options),}  # Use 'model' to match the backend expectation
 
                     response = requests.post("http://127.0.0.1:5000/upload", files=files, data=data)
                     if response.status_code == 200:

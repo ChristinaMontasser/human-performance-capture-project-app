@@ -10,12 +10,9 @@ from docker.errors import ContainerError, ImageNotFound, APIError
 import cv2
 import shutil
 import shlex
+from  models_preprocessing.human import image_to_video, split_video_to_frames
 
-def get_command(model, file_extension):
-    #!! Write a logic that returns the expected command from the model name and type of the uploaded data we will select the command 
-    #We have common format:
-    # model-name_datatype_command e.g. "4d-human_video_command", "4d-human_image_command"
-    # So, split model name, + check sent data that's now save in the file video or image, + command word  
+def get_command(model, file_extension, filename): 
     current_dir = os.path.dirname(__file__)
     json_file = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'models', 'command.json'))
 
@@ -29,22 +26,28 @@ def get_command(model, file_extension):
 
     # Load the JSON commands
     if os.path.exists(json_file):
-        with open(json_file, 'r') as f:
+        with open(json_file, 'r', encoding='utf-8') as f:
             commands = json.load(f)
-            print(commands)
     else:
         raise FileNotFoundError(f"JSON file '{json_file}' does not exist.")
 
     # Generate key based on model and data_type
     model = model.split(':')[0]
     key = f'{model}_{data_type}'
-    
-    # Check if the key exists in the JSON data
+
+    # Retrieve the command and replace the placeholder
     if key in commands:
-        value = commands.get(key)
-        return value
+        command = commands.get(key)
+        if 'FILENAME' in command:
+            # Replace placeholder with actual filename
+            command = command.replace('FILENAME', filename)
+            print(command)
+            return command
+        else:
+            return command  # No placeholder, use as is
     else:
         raise KeyError(f"Command not found for {key} in {json_file}")
+    
 
 def extract_frames(video_path, output_dir):
     if not os.path.exists(output_dir):
@@ -72,13 +75,14 @@ def model_process(model, save_to_folder, output_types):
     input_path = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'data','uploads'))
     folder_path = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'data','outputs'))
     if "image" in output_types and "npz" in output_types:
-        supported_extensions = ['.mp4', '.png', '.npz']
+        supported_extensions = ['.mp4', '.png', '.jpg', '.npz']
     elif "image" in output_types:
         supported_extensions = ['.mp4', '.png']
     elif "npz" in output_types: 
         supported_extensions = ['.npz', '.pkl']
         
     for filename in os.listdir(folder_path):
+        print("inside model process", filename)
         file_path = os.path.join(folder_path, filename)
         file_name, file_extension = os.path.splitext(file_path)
         if file_extension in supported_extensions: 
@@ -340,14 +344,77 @@ def check_image_container(image_name, command):
         if not found:
             run_container_existing_image(image_name, volumes, command)
 
+def access_existing_container_bash(image_name, command, client):
+    print('Hello Im HERE')
+    volumes = {
+        os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/workspace/data/input', 'mode': 'ro'},
+        os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/workspace/data/output', 'mode': 'rw'}
+    }
+    
 
-def run_docker_container(model, save_to_folder, file_extension, output_types):
-    command = get_command(model, file_extension)
+    #Get model_container names from json file
+    image_container_mapping = load_model_container_mapping()
+    container_name = get_container_name(image_container_mapping, image_name)
+    # There is no container with this name, we will create one based on the image 
+    # We have to make sure that the created container has volume folders 
+    if container_name == "" or container_name== None or len(container_name)==0:
+        # connect to docker server 
+        # If the image exists but the container doesn't, create a new container
+        if image_name in image_container_mapping.keys():
+            
+            container = client.containers.create( 
+                image_name.split(':')[0],
+                name=image_name.split(':')[0],
+                tty=True,
+                stdin_open=True,
+                volumes=volumes,
+                device_requests=[
+                docker.types.DeviceRequest(
+                        count=-1,
+                        capabilities=[['gpu']]
+                    )
+                ],
+                environment={"NVIDIA_VISIBLE_DEVICES": "all", "DISPLAY": ":0"}, 
+                 # 'nvidia' runtime for GPU access
+                )
+            container.start()
+    else:
+        container = client.containers.get(container_name[0])
+        if not container.status == 'running':
+            container.start()
+    
+    print(f"Container {container.name} ({container.id}) is created and started.")
+    print(command)
+    # Step 2: Access the bash shell of the container and run the given command
+   # Run the command inside the container's bash shell
+    exec_result = container.exec_run(f"bash -c \"{command}\"", tty=True)
+
+    # Print the output of the command
+    if exec_result.exit_code == 0:
+        print(exec_result.output.decode('utf-8'))
+    else:
+        print(f"Error running command: {exec_result.output.decode('utf-8')}")
+
+
+def run_docker_container(model, save_to_folder, file_extension, output_types, filename):
     model_name = model.split(':')[0]
+    if model_name == '4dhumans':
+        if file_extension in [".jpg", ".jpeg", ".png"]:
+            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            filename, file_extension= image_to_video(image_path, filename)
+            filename = filename +file_extension
+            print(filename)
+    command = get_command(model, file_extension, filename)
     supported_extensions = ['.mp4', '.avi', '.mov']
     if model_name == 'expose' and file_extension in supported_extensions: 
         expose_preprocess()
-    check_image_container(model, command)
+
+    if model_name == '4dhumans':
+        access_existing_container_bash(model, command, client)
+        split_video_to_frames(filename)
+    else:
+        check_image_container(model, command)
+   
     model_process(model, save_to_folder, output_types)
 
 

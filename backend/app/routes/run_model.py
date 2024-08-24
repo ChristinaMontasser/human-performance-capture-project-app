@@ -40,7 +40,7 @@ def upload_image():
         return jsonify({"error": "Image not saved"}), 500
 
     try:
-        result = run_model(model, save_to_folder, file_extension, output_types)
+        result = run_model(model, save_to_folder, file_extension, output_types, filename)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

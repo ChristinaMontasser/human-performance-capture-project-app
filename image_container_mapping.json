@@ -3,12 +3,9 @@
         "pare"
     ],
     "4dhumans:latest": [
-        "4dhumans",
-        "test2"
+        "4dhumans"
     ],
-    "4dhuman_solved:latest": [
-        "testtt_solved"
-    ],
+    "4dhuman_solved:latest": [],
     "4d-humans-video:latest": [],
     "4dhumans_video:latest": [],
     "expose:latest": [

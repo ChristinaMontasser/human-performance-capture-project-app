@@ -5,8 +5,8 @@ from services.docker_service import run_docker_container
 
 
 
-def run_model(model, save_to_folder, file_extension, output_types):
-    result = run_docker_container(model, save_to_folder, file_extension, output_types)
+def run_model(model, save_to_folder, file_extension, output_types, filename):
+    result = run_docker_container(model, save_to_folder, file_extension, output_types, filename)
     return result
 
 
