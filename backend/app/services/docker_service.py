@@ -77,11 +77,11 @@ def model_process(model, save_to_folder, output_types):
     input_path = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'data','uploads'))
     folder_path = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'data','outputs'))
     if "image" in output_types and "npz" in output_types:
-        supported_extensions = ['.mp4', '.png', '.npz', '.pkl']
+        supported_extensions = ['.mp4', '.png', '.npz', '.pkl', '.npy']
     elif "image" in output_types:
         supported_extensions = ['.mp4', '.png']
     elif "npz" in output_types: 
-        supported_extensions = ['.npz', '.pkl']
+        supported_extensions = ['.npz', '.pkl', '.npy']
         
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
@@ -90,7 +90,7 @@ def model_process(model, save_to_folder, output_types):
             shutil.move(file_path, save_to_folder)
         else:
             for filename in os.listdir(file_path):
-                if filename not in ('tmp_images', 'tmp_images_output'): 
+                if filename not in ('tmp_images', 'tmp_images_output', 'img'): 
                     file = os.path.join(file_path, filename)
                     if os.path.isdir(file):
                         for filename in os.listdir(file):
@@ -164,7 +164,9 @@ def delete_files_in_directory(directory, extensions=None):
 
 
 def inspect_container_volumes(container, volumes):
+        
         mounts = container.attrs['Mounts']
+        print(mounts)
         for mount in mounts:
             host_path = os.path.abspath(mount['Source'])
             container_path = mount['Destination']
@@ -195,12 +197,11 @@ def get_container_name(image_container_mapping, image_name):
             container_name = image_container_mapping[key]
     return container_name
 
-def run_container_existing_image(image_name, volumes, command_python):
+def run_container_existing_image_old(image_name, volumes, command_python):
     print('I run container with existing image and heres the image name')
     container = client.containers.run(
     image=image_name.split(':')[0],
     volumes=volumes,
-    # name=image_name.split(':')[0] + '1',
     name=image_name.split(':')[0],
     detach=True,
     shm_size='1g',  
@@ -217,7 +218,6 @@ def run_container_existing_image(image_name, volumes, command_python):
     ],
     tty=True,
     stdin_open=True,
-    #command=["/bin/bash", "/opt/conda/envs/4D-humans/bin/pip install phalp[all]@git+https://github.com/brjathu/PHALP.git", command_python]
     )
     container.reload()
     
@@ -311,99 +311,51 @@ def delete_existing_container(container_name):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def run_command_in_container(container, command):    
-    try:
-        container = client.containers.get(container)
-        exec_log = container.exec_run('python demo.py --image-folder /workspace/data/input --exp-cfg data/conf.yaml --show=False --output-folder /workspace/data/output --save-params True --save-vis True --save-mesh True')
-        print(exec_log.output.decode())
-    except docker.errors.NotFound:
-        print(f"Container {container} not found.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
-def check_image_container(image_name, command):
-    #Define volumes that will be bind with the cont
-    volumes = {
-        os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/workspace/data/input', 'mode': 'ro'},
-        os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/workspace/data/output', 'mode': 'rw'}
-    }
-    #Get model_container names from json file
-    image_container_mapping = load_model_container_mapping()
-    # Check if the container exists in the JSON mapping
-    # We have to check that the existing container has been run with a volume whose directories as defined above, otherwise delete it 
-    container_name = get_container_name(image_container_mapping, image_name)
-    # There is no container with this name, we will create one based on the image 
-    # We have to make sure that the created container has volume folders 
-    if container_name == "" or container_name== None or len(container_name)==0:
-        # connect to docker server 
-        # If the image exists but the container doesn't, create a new container
-        if image_name in image_container_mapping.keys():
-            return run_container_existing_image(image_name, volumes, command)
-        else:
-            dockerfile_path, model_folder = get_image_docker_file(image_name.split(':')[0])
-            print("this is 1")
-            #Build an image and run container 
-            if os.path.exists(dockerfile_path):
-                # Build the image
-                build_image(image_name, model_folder, dockerfile_path)
-                # Create a new container from the built image
-                return run_container_existing_image(image_name, volumes) #run_container_existing_image
-            else:
-                # If neither model nor container exists and no Dockerfile is found
-                raise ValueError(f"No container or Dockerfile found for model: {image_name}")
-    else:
-        docker_image = image_name.split(':')[0]
-        found = False
-        print(container_name)
-        for name in container_name:
-            if docker_image == name:
-                delete_existing_container(docker_image)
-                run_container_existing_image(image_name, volumes, command)
-                found = True
-                break
-        if not found:
-            run_container_existing_image(image_name, volumes, command)
 
-def access_existing_container_bash(image_name, command, client):
-    print('Hello Im HERE')
-    volumes = {
-        os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/workspace/data/input', 'mode': 'ro'},
-        os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/workspace/data/output', 'mode': 'rw'}
-    }
-    
+# def check_image_container(image_name, command):
+#     #Define volumes that will be bind with the cont
+#     volumes = {
+#         os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/workspace/data/input', 'mode': 'ro'},
+#         os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/workspace/data/output', 'mode': 'rw'}
+#     }
+#     #Get model_container names from json file
+#     image_container_mapping = load_model_container_mapping()
+#     # Check if the container exists in the JSON mapping
+#     # We have to check that the existing container has been run with a volume whose directories as defined above, otherwise delete it 
+#     container_name = get_container_name(image_container_mapping, image_name)
+#     # There is no container with this name, we will create one based on the image 
+#     # We have to make sure that the created container has volume folders 
+#     if container_name == "" or container_name== None or len(container_name)==0:
+#         # connect to docker server 
+#         # If the image exists but the container doesn't, create a new container
+#         if image_name in image_container_mapping.keys():
+#             return run_container_existing_image(image_name, volumes, command)
+#         else:
+#             dockerfile_path, model_folder = get_image_docker_file(image_name.split(':')[0])
+#             #Build an image and run container 
+#             if os.path.exists(dockerfile_path):
+#                 # Build the image
+#                 build_image(image_name, model_folder, dockerfile_path)
+#                 # Create a new container from the built image
+#                 return run_container_existing_image(image_name, volumes) #run_container_existing_image
+#             else:
+#                 # If neither model nor container exists and no Dockerfile is found
+#                 raise ValueError(f"No container or Dockerfile found for model: {image_name}")
+#     else:
+#         docker_image = image_name.split(':')[0]
+#         found = False
+#         print(container_name)
+#         for name in container_name:
+#             if docker_image == name:
+#                 delete_existing_container(docker_image)
+#                 run_container_existing_image(image_name, volumes, command)
+#                 found = True
+#                 break
+#         if not found:
+#             run_container_existing_image(image_name, volumes, command)
 
-    #Get model_container names from json file
-    image_container_mapping = load_model_container_mapping()
-    container_name = get_container_name(image_container_mapping, image_name)
-    # There is no container with this name, we will create one based on the image 
-    # We have to make sure that the created container has volume folders 
-    if container_name == "" or container_name== None or len(container_name)==0:
-        # connect to docker server 
-        # If the image exists but the container doesn't, create a new container
-        if image_name in image_container_mapping.keys():
-            
-            container = client.containers.create( 
-                image_name.split(':')[0],
-                name=image_name.split(':')[0],
-                tty=True,
-                stdin_open=True,
-                volumes=volumes,
-                device_requests=[
-                docker.types.DeviceRequest(
-                        count=-1,
-                        capabilities=[['gpu']]
-                    )
-                ],
-                environment={"NVIDIA_VISIBLE_DEVICES": "all", "DISPLAY": ":0"}, 
-                 # 'nvidia' runtime for GPU access
-                )
-            container.start()
-    else:
-        container = client.containers.get(container_name[0])
-        if not container.status == 'running':
-            container.start()
-    
-    print(f"Container {container.name} ({container.id}) is created and started.")
+def run_command_inside_bash(container, command):
     print(command)
     # Step 2: Access the bash shell of the container and run the given command
    # Run the command inside the container's bash shell
@@ -415,6 +367,100 @@ def access_existing_container_bash(image_name, command, client):
     else:
         print(f"Error running command: {exec_result.output.decode('utf-8')}")
 
+def run_container_existing_image(image_name, volumes, command):
+    container = client.containers.create( 
+        image_name.split(':')[0],
+        name=image_name.split(':')[0],
+        tty=True,
+        stdin_open=True,
+        volumes=volumes,
+        device_requests=[
+        docker.types.DeviceRequest(
+                count=-1,
+                capabilities=[['gpu']]
+            )
+        ],
+        environment={"NVIDIA_VISIBLE_DEVICES": "all", "DISPLAY": ":0"}, 
+        shm_size='1g'
+        )
+    container.start()
+    print(f"Container {container.name} ({container.id}) is created and started.")
+    run_command_inside_bash(container, command)
+    return True
+   
+
+# def run_docker_container(model, save_to_folder, file_extension, output_types, filename):
+#     model_name = model.split(':')[0]
+#     if model_name == '4dhumans':
+#         if file_extension in [".jpg", ".jpeg", ".png"]:
+#             image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+#             filename, file_extension= image_to_video(image_path, filename)
+#             filename = filename +file_extension
+#             print(filename)
+#     command = get_command(model, file_extension, filename)
+#     supported_extensions = ['.mp4', '.avi', '.mov']
+#     if model_name == 'expose' and file_extension in supported_extensions: 
+#         expose_preprocess()
+
+#     if model_name == '4dhumans':
+#         access_existing_container_bash(model, command, client)
+#         if file_extension in [".jpg", ".jpeg", ".png"]:
+#             split_video_to_frames(filename)
+#     else:
+#         check_image_container(model, command)
+   
+#     model_process(model, save_to_folder, output_types)
+#     return True
+
+
+
+
+
+
+def check_image_container(image_name, command):
+    volumes = {
+        os.path.abspath(current_app.config['UPLOAD_FOLDER']): {'bind': '/workspace/data/input', 'mode': 'ro'},
+        os.path.abspath(current_app.config['OUTPUT_FOLDER']): {'bind': '/workspace/data/output', 'mode': 'rw'}
+    }
+    #Get model_container names from json file
+    image_container_mapping = load_model_container_mapping()
+    # Check if the container exists in the JSON mapping
+    # We have to check that the existing container has been run with a volume whose directories as defined above, otherwise delete it 
+    container_name = get_container_name(image_container_mapping, image_name)
+    #There is no container with this name, we will create one based on the image 
+    #We have to make sure that the created container has volume folders 
+    if container_name == "" or container_name== None or len(container_name)==0:
+        # connect to docker server 
+        # If the image exists but the container doesn't, create a new container
+        if image_name in image_container_mapping.keys():
+            return run_container_existing_image(image_name, volumes, command)
+        else:
+            dockerfile_path, model_folder = get_image_docker_file(image_name)
+            #Build an image and run container 
+            if os.path.exists(dockerfile_path):
+                # Build the image
+                image, _ = build_image(image_name, model_folder)
+                # Create a new container from the built image
+                return run_container_existing_image(image_name, volumes, command)
+            else:
+                # If neither model nor container exists and no Dockerfile is found
+                raise ValueError(f"No container or Dockerfile found for model: {image_name}")
+    else:
+        print('Iam Found')
+        container = client.containers.get(container_name[0])
+        is_matched = inspect_container_volumes(container, volumes=volumes)
+        if (is_matched):
+            if not container.status == 'running':
+                print('its not running ')
+                container.start()
+                #Send command directly
+            run_command_inside_bash(container, command)
+        else:
+           #We have to delete the old one and create a new container because it doesn't bind with the data folder 
+           #And docker doesn't support to update the container to bind a volume 
+            delete_existing_container(container_name)
+            return run_container_existing_image(image_name, volumes, command)
+        
 
 def run_docker_container(model, save_to_folder, file_extension, output_types, filename):
     model_name = model.split(':')[0]
@@ -423,18 +469,16 @@ def run_docker_container(model, save_to_folder, file_extension, output_types, fi
             image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             filename, file_extension= image_to_video(image_path, filename)
             filename = filename +file_extension
-            print(filename)
+            #print(filename)
     command = get_command(model, file_extension, filename)
     supported_extensions = ['.mp4', '.avi', '.mov']
     if model_name == 'expose' and file_extension in supported_extensions: 
         expose_preprocess()
 
-    if model_name == '4dhumans':
-        access_existing_container_bash(model, command, client)
-        if file_extension in [".jpg", ".jpeg", ".png"]:
-            split_video_to_frames(filename)
-    else:
-        check_image_container(model, command)
+    if model_name == '4dhumans' and file_extension in [".jpg", ".jpeg", ".png"]:
+        split_video_to_frames(filename)
+
+    check_image_container(model, command)
    
     model_process(model, save_to_folder, output_types)
     return True

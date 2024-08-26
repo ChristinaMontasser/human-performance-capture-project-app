@@ -52,7 +52,7 @@ class UploadFrame(tk.Frame):
         self.output_path_label = tk.Label(self, text="")
         self.output_path_label.pack(pady=10)
 
-        self.submit_button = tk.Button(self, text="Start", command=self.upload_input)
+        self.submit_button = tk.Button(self, text="Estimate Parameters", command=self.upload_input)
         self.submit_button.pack(pady=20)
         
         self.file_path = None
