@@ -1,0 +1,21 @@
+{
+    "pare:latest": [
+        "pare"
+    ],
+    "4dhumans:latest": [
+        "4dhumans"
+    ],
+    "4dhuman_solved:latest": [],
+    "4d-humans-video:latest": [],
+    "4dhumans_video:latest": [],
+    "expose:latest": [
+        "expose"
+    ],
+    "python:latest": [],
+    "4d-humans-video-2:latest": [],
+    "expose1:latest": [
+        "expose11"
+    ],
+    "docker-4d-humans-v2:latest": [],
+    "nvidia/cuda:12.4.1-cudnn-runtime-ubuntu20.04": []
+}

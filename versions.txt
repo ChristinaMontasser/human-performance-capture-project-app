@@ -19,3 +19,5 @@ v4 --> backend
 v6 --> REAL FINAL
 	v6.1 --> some updates, window, display result, and others...  
 	v6.2 --> 4D humans works in framework 
+	v6.3 --> 4D humans, image case works 
+	v6.4

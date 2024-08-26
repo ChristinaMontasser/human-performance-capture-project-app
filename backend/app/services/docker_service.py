@@ -42,9 +42,11 @@ def get_command(model, file_extension, filename):
             # Replace placeholder with actual filename
             command = command.replace('FILENAME', filename)
             print(command)
-            return command
-        else:
-            return command  # No placeholder, use as is
+            #return command
+        if 'WithoutExte' in command:
+            command = command.replace('WithoutExte', os.path.splitext(filename)[0])
+        
+        return command  # No placeholder, use as is
     else:
         raise KeyError(f"Command not found for {key} in {json_file}")
     
@@ -75,24 +77,42 @@ def model_process(model, save_to_folder, output_types):
     input_path = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'data','uploads'))
     folder_path = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'data','outputs'))
     if "image" in output_types and "npz" in output_types:
-        supported_extensions = ['.mp4', '.png', '.jpg', '.npz']
+        supported_extensions = ['.mp4', '.png', '.npz', '.pkl']
     elif "image" in output_types:
         supported_extensions = ['.mp4', '.png']
     elif "npz" in output_types: 
         supported_extensions = ['.npz', '.pkl']
         
     for filename in os.listdir(folder_path):
-        print("inside model process", filename)
         file_path = os.path.join(folder_path, filename)
         file_name, file_extension = os.path.splitext(file_path)
-        if file_extension in supported_extensions: 
+        if file_extension in supported_extensions:
             shutil.move(file_path, save_to_folder)
+        else:
+            for filename in os.listdir(file_path):
+                if filename not in ('tmp_images', 'tmp_images_output'): 
+                    file = os.path.join(file_path, filename)
+                    if os.path.isdir(file):
+                        for filename in os.listdir(file):
+                            file_path = os.path.join(file, filename)
+                            file_name, file_extension = os.path.splitext(file_path)
+                            shutil.move(file_path, save_to_folder)
+                    else:
+                        file_name, file_extension = os.path.splitext(file)
+                        if file_extension in supported_extensions:
+                            shutil.move(file, save_to_folder)
 
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
         if os.path.isfile(file_path):
             try: 
                 os.remove(file_path)
+                print(f"Deleted: {file_path}")
+            except OSError as e:
+                print(f"Error deleting {file_path}: {e}")
+        elif os.path.isdir(file_path):
+            try: 
+                shutil.rmtree(file_path)
                 print(f"Deleted: {file_path}")
             except OSError as e:
                 print(f"Error deleting {file_path}: {e}")
@@ -411,18 +431,10 @@ def run_docker_container(model, save_to_folder, file_extension, output_types, fi
 
     if model_name == '4dhumans':
         access_existing_container_bash(model, command, client)
-        split_video_to_frames(filename)
+        if file_extension in [".jpg", ".jpeg", ".png"]:
+            split_video_to_frames(filename)
     else:
         check_image_container(model, command)
    
     model_process(model, save_to_folder, output_types)
-
-
-
-
-    
-    #Now we have to send the output that's in output folder to the 'Save To' folder
-    #copy from one data/outputs to the save_to_folder
-    #copy based on preference result, npz. overlayed image or both, create filter function that filters the copied files based on its extention 
-    #copy_files(current_app.config['OUTPUT_FOLDER'], save_to_folder, extensions)
     return True

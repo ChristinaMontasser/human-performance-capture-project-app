@@ -148,7 +148,6 @@ class UploadFrame(tk.Frame):
                     data = {'model': container_name, 
                             'save_to_folder': self.output_path, 
                             'output_types': ','.join(selected_options),}  # Use 'model' to match the backend expectation
-
                     response = requests.post("http://127.0.0.1:5000/upload", files=files, data=data)
                     if response.status_code == 200:
                         self.show_result_callback(response.json())
