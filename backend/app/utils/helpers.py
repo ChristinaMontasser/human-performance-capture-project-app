@@ -52,3 +52,16 @@ def copy_files(src_folder, dst_folder, extensions):
     except Exception as e:
         logging.error(f"An error occurred while copying files: {e}")
 
+
+
+def load_model_container_mapping():
+    current_dir = os.path.dirname(__file__)
+    print(os.path.join(current_dir, '..', '..', 'database', 'image_container_mapping.json'))
+    json_file = os.path.abspath(os.path.join(current_dir, '..', '..', '..', 'database', 'image_container_mapping.json'))
+    # Load JSON data from the file
+    if os.path.exists(json_file):
+        with open(json_file, 'r') as f:
+            image_container_mapping = json.load(f)
+    else:
+        raise FileNotFoundError(f"JSON file '{json_file}' does not exist.")
+    return image_container_mapping

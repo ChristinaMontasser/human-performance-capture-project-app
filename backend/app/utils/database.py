@@ -23,7 +23,7 @@ def set_up_docker_json_file():
         if image in image_container_mapping:
             image_container_mapping[image].append(container_name)
     # Save the dictionary to a JSON file
-    with open('image_container_mapping.json', 'w') as json_file:
+    with open('database/image_container_mapping.json', 'w') as json_file:
         json.dump(image_container_mapping, json_file, indent=4)
 
     print("Image-container mapping saved to image_container_mapping.json")

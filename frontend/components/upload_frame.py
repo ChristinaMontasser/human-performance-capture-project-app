@@ -59,10 +59,10 @@ class UploadFrame(tk.Frame):
         self.folder_path = None
         self.output_path =None
 
-        with open('model_description.json', 'r') as f:
+        with open('database/model_description.json', 'r') as f:
             self.model_info = json.load(f)
 
-        with open('model_input_data_type.json', 'r') as f:
+        with open('database/model_input_data_type.json', 'r') as f:
             self.models = json.load(f)
 
         self.filter_models()

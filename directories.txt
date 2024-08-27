@@ -1,40 +1,76 @@
-human-performance-capture-project-app/
-├── backend/
-│   ├── app/
-│   │   ├── models/ all models with their docker files are here  
-│   │   │   ├── model1/
-│   │   │   │   ├── Dockerfile
-│   │   │   │   ├── requirements.txt
-│   │   │   │   └── model_script.py
-│   │   │   ├── model2/
-│   │   │   └── model3/
-│   │   ├── routes/ #all backend functionalities desined with their route so the server can call the function that can handle the request 
-│   │   │   ├── __init__.py
-│   │   │   ├── upload.py
-│   │   │   └── run_model.py
-│   │   ├── services/ #services that the backend uses to run the model and init the docker container 
-│   │   │   ├── __init__.py
-│   │   │   ├── docker_service.py
-│   │   │   └── model_service.py
-│   │   ├── utils/ helpers functions 
-│   │   │   ├── __init__.py
-│   │   │   └── helpers.py
+HUMAN-PERFORMANCE-CAPTURE-PROJECT
+│
+├── backend
+│   ├── __pycache__
+│   │
+│   └── app
+│       ├── __pycache__
+│       ├── models_preprocessing ( This folder contains preprocessing python file for each model, )
+│       │   ├── __pycache__
+│       │   └── models
+│       │       ├── __init__.py
+│       │       ├── detect_single_human.py
+│       │       ├── expose.py
+│       │       └── human.py
+│       │
+│       ├── routes #Backend functionalities that are needed to be accessed from the frontend are defined here with a route. Therefore, when the user calls a function, it starts to handle the request.
+│       │   ├── __pycache__
+│       │   ├── __init__.py
+│       │   ├── main.py
+│       │   └── run_model.py (The starting point of the backend process, when the user presses Estimate Parameters button in the UI)
+│       │
+│       ├── services  #Services that the backend uses to run the model and start the docker container 
+│       │   ├── __pycache__
+│       │   ├── __init__.py
+│       │   ├── docker_service.py  (To check container, image, dockerfile existance, and to run the command inside the container.)
+│       │   └── model_service.py (The backend function that starts the call with the docker services (start connection with Docker API))
+│       │
+│       └── utils
+│           ├── __pycache__
+│           ├── __init__.py
+│           ├── database.py (database-related functions, for example, to update the database of the existing images and containers with the current state)
+│           ├── helpers.py (some helper functons, copy, filter)
+│           ├── config.py (Upload and Output folder names configuration that are used in mounting the volume)
+│           └── main.py (to start the backend on the server side)
+│           └── output_processing.py (To process any model output and send it back to the elected directory by the user)
+│           └── get_command.py (to get the command based on the model name and the input data type, image or video)
+
+│
+├── data (Mounted directory among all containers and server storage)
+│   ├── outputs
+│   └── uploads
+│
+├── database (We did not need so much data to set up a SQL database, so we go with json file )
+│   ├── command.json (Models' commands)
+│   ├── image_container_map.json (existing images and their corresponding containers )
+│   ├── model_description.json (Description for each model to be shown in the UI)
+│   └── model_input_data_types.json (model input data type limitations)
+│
+├── frontend
+│   ├── components
+│   │   ├── __pycache__
+│   │   └── models
+│   │       ├── detect_single_human.py (precprocessing for ExPose to reject sending the request if it doesn't match model capability)
+│   │       ├── result_frame.py (the result framework is here)
+│   │       └── upload_frame.py (the UI is implemented here)
+│   │
+│   ├── src
 │   │   ├── __init__.py
-│   │   ├── main.py --> entry point 
-│   │   └── config.py --> config file that is used to configure the flask application 
-├── frontend/
-│   ├── main.py  # This is where the Tkinter GUI code will go
-│   ├── components/
-│   │   ├── upload_frame.py
-│   │   └── result_frame.py
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   └── api.py  # to interact with the backend
-├── data/
-│   ├── uploads/
-│   └── outputs/
-├── scripts/ 
-│   ├── build_docker_images.sh
-│   ├── run_docker_containers.sh
-│   └── deploy.sh
-├── docker-compose.yml
+│   │   └── api.py (The starting point of sending a request to the backend)
+│   │
+│   ├── utils
+│   │
+│   └── main.py (Frontend starting point)
+│
+├── models (Folders in which the dockerfile and the nodel source code should be placed so the case where no container nethier image gets handled by running an image for the model)
+│   ├── 4dhumans
+│   ├── expose
+│   ├── model
+│   └── Pare
+│
+│
+├── README.md
+├── requirements.txt
+└── versions.txt (version are documented here with description and new added functionalities)
+
+

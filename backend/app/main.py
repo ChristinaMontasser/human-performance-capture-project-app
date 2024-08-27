@@ -13,6 +13,6 @@ app.register_blueprint(run_model_blueprint)
 
 if __name__ == '__main__':
     #Setting up the database of image and containers 
-    #if(is_file_empty('image_container_mapping.json')):
+    #if(is_file_empty('database/image_container_mapping.json')):
     set_up_docker_json_file()
     app.run(debug=True)
