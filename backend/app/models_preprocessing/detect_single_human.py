@@ -44,6 +44,7 @@ if __name__ == "__main__":
     if is_single_person:
         sys.exit(0)
     else:
+        print("it contains more than one person")
         sys.exit(1)
 
 

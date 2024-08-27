@@ -1,4 +1,8 @@
 {
+    "expose:latest": [
+        "expose_test",
+        "expose"
+    ],
     "4dhumans:latest": [
         "4dhumans"
     ],
@@ -7,9 +11,6 @@
     ],
     "pare:latest": [
         "pare"
-    ],
-    "expose:latest": [
-        "expose"
     ],
     "python:latest": [],
     "expose1:latest": [

@@ -6,7 +6,7 @@ import re
 def natural_sort_key(s, _nsre=re.compile(r'(\d+)')):
     return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
 
-def merge_npz_files(input_folder, output_file):
+def merge_npz_files(input_folder, output_folder):
     poses_list = []
     trans_list = []
     betas_list = []
@@ -34,9 +34,15 @@ def merge_npz_files(input_folder, output_file):
     # Set mocap_frame_rate
     mocap_frame_rate = 30
 
+    # Create the output folder if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Define the output file path
+    output_file_path = os.path.join(output_folder, 'merged_data.npz')
+
     # Save the concatenated arrays and median betas into a new npz file
-    np.savez(output_file, poses=all_poses, trans=all_trans, betas=median_betas, mocap_frame_rate=mocap_frame_rate)
-    print(f"Merged data saved to {output_file}")
+    np.savez(output_file_path, poses=all_poses, trans=all_trans, betas=median_betas, mocap_frame_rate=mocap_frame_rate)
+    print(f"Merged data saved to {output_file_path}")
 
 def main():
     # Create ArgumentParser object
@@ -45,14 +51,14 @@ def main():
     # Add --input-folder argument
     parser.add_argument('--input-folder', type=str, required=True, help='Path to the input folder')
 
-    # Add --output-file argument
-    parser.add_argument('--output-file', type=str, required=True, help='Path to the output npz file')
+    # Add --output-folder argument
+    parser.add_argument('--output-folder', type=str, required=True, help='Path to the output folder')
 
     # Parse command-line arguments
     args = parser.parse_args()
 
-    # Merge npz files in the input folder and save to the output file
-    merge_npz_files(args.input_folder, args.output_file)
+    # Merge npz files in the input folder and save to the output folder
+    merge_npz_files(args.input_folder, args.output_folder)
 
 if __name__ == "__main__":
     main()
